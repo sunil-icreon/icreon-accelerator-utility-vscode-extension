@@ -1,0 +1,13 @@
+.vscode/**
+.vscode-test/**
+out/test/**
+images/readme/**
+**/*.map
+.gitignore
+tsconfig.json
+typings/**
+package-lock.json
+**/jsconfig.json
+README.md
+src/**
+node_modules/**

@@ -1,0 +1,189 @@
+{
+  "name": "icreon-accelerator-utility",
+  "displayName": "Icreon Accelerator: Utilities",
+  "version": "1.0.0",
+  "description": "Extension helps with below activities:\n1. Perform static code analysis to find vulnerabilities, outdated packages, EsLint issue, unused/duplicate code and licensed files.\n2. Provide NPM package viewer to search and install packages, along with displaying there vulnerabilities.\n3. Knowledge Center to implement/integrate defined solutions.\n4. AI Utilities to write unit tests for multiple files together.",
+  "main": "./out/main.js",
+  "icon": "images/icreon-icon.png",
+  "publisher": "Icreon",
+  "categories": [
+    "Visualization"
+  ],
+  "engines": {
+    "vscode": "^1.76.0"
+  },
+  "activationEvents": [],
+  "author": {
+    "name": "Sunil Kumar",
+    "email": "sunil.kumar@icreon.com"
+  },
+  "license": "ISC",
+  "keywords": [
+    "npm",
+    "audit"
+  ],
+  "contributes": {
+    "submenus": [
+      {
+        "id": "icreon-accelerator-utility.editor.submenu",
+        "label": "Icreon Accelerator"
+      }
+    ],
+    "commands": [
+      {
+        "command": "icreon-accelerator-utility.npmAuditReportCommandSingleFile",
+        "title": "Icreon Accelerator: Utilities",
+        "enablement": "resourceFilename == package-lock.json"
+      },
+      {
+        "command": "icreon-accelerator-utility.runCommandOnNPMPackageSearch",
+        "title": "View Package Details"
+      },
+      {
+        "command": "icreon-accelerator-utility.openAIClearKey",
+        "title": "Icreon Accelerator: Clear OpenAI Key"
+      },
+      {
+        "command": "icreon-accelerator-utility.knowledgeCenter",
+        "title": "Icreon Accelerator: Knowledge Center",
+        "enablement": "resourceFilename != package-lock.json && resourceFilename != package.json && editorLangId != 'scss' && editorLangId != 'json'"
+      },
+      {
+        "command": "icreon-accelerator-utility.npmSearch",
+        "title": "Icreon Accelerator: NPM Viewer",
+        "enablement": "resourceFilename != package-lock.json && resourceFilename != package.json && editorLangId != 'scss' && editorLangId != 'json'"
+      },
+      {
+        "command": "icreon-accelerator-utility.aiDashboard",
+        "title": "Icreon Accelerator: Add Unit Tests",
+        "enablement": "resourceFilename != package-lock.json && resourceFilename != package.json && editorLangId != 'scss' && editorLangId != 'json'",
+        "when": "editorLangId == typescript || resourceUri.path =~ /.+(\\/|\\\\).+/",
+        "group": "navigation"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "icreon-accelerator-utility.aiDashboard",
+          "group": "navigation@2"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "icreon-accelerator-utility.npmAuditReportCommandSingleFile",
+          "group": "navigation"
+        },
+        {
+          "command": "icreon-accelerator-utility.aiDashboard",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "submenu": "icreon-accelerator-utility.editor.submenu",
+          "group": "icreon-accelerator-utility.editor"
+        },
+        {
+          "command": "icreon-accelerator-utility.runCommandOnNPMPackageSearch",
+          "when": "editorHasSelection",
+          "group": "navigation"
+        }
+      ],
+      "icreon-accelerator-utility.editor.submenu": [
+        {
+          "command": "icreon-accelerator-utility.aiDashboard",
+          "group": "icreon-accelerator-utility.editor@1"
+        },
+        {
+          "command": "icreon-accelerator-utility.npmSearch",
+          "group": "icreon-accelerator-utility.editor@2"
+        },
+        {
+          "command": "icreon-accelerator-utility.knowledgeCenter",
+          "group": "icreon-accelerator-utility.editor@3"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": ": Utilities",
+      "properties": {
+        "icreon-accelerator-utility.apiURL": {
+          "type": "object",
+          "properties": {
+            "vulnerability": {
+              "type": "string"
+            },
+            "projectStatistics": {
+              "type": "string"
+            }
+          },
+          "default": {},
+          "description": "Submit data to server"
+        },
+        "icreon-accelerator-utility.GPTModels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "gpt-4o",
+            "gpt-4o-2024-05-13",
+            "gpt-4-turbo",
+            "gpt-4-turbo-2024",
+            "gpt-4-turbo-preview",
+            "gpt-4-0125-preview",
+            "gpt-4-1106-preview",
+            "gpt-4",
+            "gpt-4-0613",
+            "gpt-4-32k",
+            "gpt-4-32k-0613",
+            "gpt-3.5-turbo-1106",
+            "gpt-3.5-turbo",
+            "gpt-3.5-turbo-16k",
+            "gpt-3.5-turbo-instruct",
+            "text-davinci-003",
+            "text-davinci-002",
+            "text-curie-001",
+            "text-babbage-001",
+            "text-ada-001",
+            "code-davinci-002",
+            "code-cushman-002"
+          ],
+          "description": "GPT Model"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run esbuild-base --minify",
+    "esbuild-base": "esbuild ./src/extension.js --bundle --outfile=out/main.js --external:vscode  --format=cjs --platform=node",
+    "esbuild": "npm run -S esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run -S esbuild-base -- --sourcemap --watch",
+    "build:package": "vsce package",
+    "pretest": "npm run lint",
+    "vscode:postinstall": "npm install knip@5.27.3 fta-cli@2.0.0 jscpd@4.0.4  --legacy-peer-deps"
+  },
+  "dependencies": {
+    "marked": "^13.0.2",
+    "openai": "^4.55.3",
+    "semver": "7.6.2"
+  },
+  "repository": {},
+  "devDependencies": {
+    "@types/glob": "8.1.0",
+    "@types/node": "latest",
+    "@types/vscode": "1.76.0",
+    "@vscode/vsce": "2.19.0",
+    "esbuild": "0.17.17",
+    "fta-cli": "2.0.0",
+    "glob": "8.1.0",
+    "jscpd": "4.0.4",
+    "vscode": "^1.1.34"
+  },
+  "files": [
+    "out",
+    "images",
+    "package.json"
+  ]
+}

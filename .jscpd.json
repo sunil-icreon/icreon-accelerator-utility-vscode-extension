@@ -1,0 +1,14 @@
+{
+  "exclude": [
+    "**/node_modules/**",
+    "**/assets/**",
+    "**/__tests__/**",
+    "**/mocks/**",
+    "**/generators/**",
+    "**/coverage/**",
+    "**/build/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/*.test.js"
+  ]
+}

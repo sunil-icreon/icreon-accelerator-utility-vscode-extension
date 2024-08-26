@@ -1,0 +1,24 @@
+{
+  "id": "activate_kendo_license",
+  "title": "Activate Kendo License",
+  "displaySteps": [
+    {
+      "id": 1,
+      "title": "Kendo License will be activated.",
+      "description": "\n          <div class='code-snippet'>\n          <pre>\n            <code>\n  npx kendo-ui-license activate\n            </code>\n          </pre>\n        </div>"
+    }
+  ],
+  "info": "\n      <h1>Activate Kendo License.</h1>\n      <p>Below command will be executed to activate Kendo UI license. This will read try to read license information from either file named 'kendo-ui-license.txt' in root directory or an environment varaible 'KENDO_UI_LICENSE_KEY'. </p>",
+  "steps": [
+    {
+      "id": 1,
+      "status": 0,
+      "title": "Activating Kendo License.",
+      "subtitle": "",
+      "commandType": "RUN_NPM_COMMAND",
+      "command": "npx kendo-ui-license activate ",
+      "successMsg": "Kendo License activated successfully.",
+      "errorMsg": "Kendo License activation failed."
+    }
+  ]
+}
