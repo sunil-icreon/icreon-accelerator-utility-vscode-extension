@@ -8,7 +8,7 @@ which are covered by LICENSE.plus.
 
 The MIT License (MIT)
 
-Copyright (c) 2021-2023 Icreon (https://www.icreon.com), Sunil Kumar ("sunil.kumaricreon.com")
+Copyright (c) 2021-2023 Icreon (https://www.icreon.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
