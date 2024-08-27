@@ -503,7 +503,6 @@ class WebRenderer {
   renderAppFooterContent = () => {
     return `
       <div id="nodeVerionsLabel" class='hide-on-browser' ></div>
-      <div>Report Date: <b>${formatDate(new Date())}</b></div>
     `;
   };
 
@@ -720,6 +719,7 @@ const createReportFile = async (webRenderedRef, content, reportType) => {
     .text-with-icon { justify-content: center!important; }
     .show-on-browser{display: block!important;}
     .right-section{ margin-left: 15px;}
+    .app-footer{ display:none;}
     </style>`;
 
     content += `<link href="media/css/style.css" rel="stylesheet"></link>`;

@@ -45,6 +45,7 @@
   --dark-grey: #424245;
   --light-green: #ccffe0;
   --light-grey: #e7eaec;
+  --dark-grey-alt: #dfdfdf;
   --light-red: #ffe2e2;
 }
 
@@ -1077,8 +1078,12 @@ tr.selected td {
   text-align: center;
   background: #e4e4e4;
   border-bottom: 0;
-  min-height: 180px;
+  min-height: 200px;
 }
+.brief-info:hover .info-box {
+  background: var(--dark-grey-alt);
+}
+
 .icon-btn {
   background: #ebebeb;
   border: none;
@@ -1153,25 +1158,30 @@ tr.selected td {
 }
 
 .brief-info .info-box.selected {
+  background: var(--icreon-purple);
+}
+
+.brief-info .info-box.selected:hover {
   background: var(--icreon-blue-bg);
 }
+
 .brief-info .info-box.selected * {
   color: white;
 }
 
 .brief-info .info-header {
-  font-size: 1.5em;
+  font-size: 1.3em;
   font-weight: bold;
   color: #707070;
 }
 .brief-info .info-sub {
   font-weight: bold;
   color: #4966ba;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .brief-info .info-count {
-  font-size: 5em;
+  font-size: 4em;
   font-weight: bold;
   margin-top: 20px;
   color: #706e6b;
@@ -1546,9 +1556,18 @@ tr.selected td {
 .tab-button.active .vul-pill {
   border: 1px solid transparent;
 }
+
 .tab-button.active {
+  background-color: var(--icreon-purple);
+}
+.tab-button.active:hover {
   background-color: var(--icreon-blue-bg);
 }
+
+.tab-button.active:hover .tab-btn-label {
+  color: var(--icreon-white);
+}
+
 .tab-button {
   flex: 1;
   padding: 10px;

@@ -47,30 +47,37 @@ var allSections = [
 function initAccordian() {
   var headers = document.querySelectorAll(".accordion-header");
   headers.forEach(function (header) {
-    header.removeEventListener("click", function () {});
-    header.addEventListener("click", function () {
-      var content = this.nextElementSibling;
-      var icon = this.querySelector(".icon");
-      var isOpen = content.style.display === "block";
+    const isClickAdded = header.getAttribute("on-click-added") === "1";
 
-      // Close all accordion contents
-      document.querySelectorAll(".accordion-content").forEach(function (item) {
-        item.style.display = "none";
+    if (!isClickAdded) {
+      header.setAttribute("on-click-added", "1");
+      header.addEventListener("click", function () {
+        var content = header.nextElementSibling;
+        var icon = header.querySelector(".icon");
+        var isOpen =
+          content.style.display === "block" || content.style.display === "flex";
+
+        // Close all accordion contents
+        document
+          .querySelectorAll(".accordion-content")
+          .forEach(function (item) {
+            item.style.display = "none";
+          });
+
+        // Reset all icons
+        document.querySelectorAll(".icon").forEach(function (icon) {
+          icon.classList.remove("rotate");
+          icon.textContent = "+";
+        });
+
+        // Toggle the clicked accordion item
+        if (!isOpen) {
+          content.style.display = "block";
+          icon.classList.add("rotate");
+          icon.textContent = "−";
+        }
       });
-
-      // Reset all icons
-      document.querySelectorAll(".icon").forEach(function (icon) {
-        icon.classList.remove("rotate");
-        icon.textContent = "+";
-      });
-
-      // Toggle the clicked accordion item
-      if (!isOpen) {
-        content.style.display = "block";
-        icon.classList.add("rotate");
-        icon.textContent = "−";
-      }
-    });
+    }
   });
 }
 
@@ -440,6 +447,7 @@ function openTab(evt, tabName) {
 function renderResponses(id, data) {
   if (data.hideSection) {
     showElement(id + "_brief_section", false, "flex");
+    initAccordian();
     return;
   }
 
@@ -474,7 +482,9 @@ function renderResponses(id, data) {
     }
   }
 
-  initAccordian();
+  setTimeout(() => {
+    initAccordian();
+  }, 500);
 }
 
 function showTopicDetails(topicId) {

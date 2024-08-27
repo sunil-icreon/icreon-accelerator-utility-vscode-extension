@@ -8,7 +8,7 @@ which are covered by LICENSE.plus.
 
 The MIT License (MIT)
 
-Copyright (c) 2021-2023 UI Geeks (https://ui-geeks.in/), Sunil Kumar ("skumar.mca2010@gmail.com")
+Copyright (c) 2021-2023 Icreon (https://www.icreon.com), Sunil Kumar ("sunil.kumaricreon.com")
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,14 +27,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-{
-"command": "icreon-accelerator-utility.knowledgeCenter",
-"title": "Icreon Accelerator: Knowledge Center",
-"enablement": "resourceFilename == package-lock-temp.json"
-},
-{
-"command": "icreon-accelerator-utility.npmSearch",
-"title": "Icreon Accelerator: NPM Search",
-"enablement": "resourceFilename == package-lock-temp.json"
-},
