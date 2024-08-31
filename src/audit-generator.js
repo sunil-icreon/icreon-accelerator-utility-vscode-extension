@@ -1,35 +1,23 @@
-const { dirname } = require("path");
-const path = require("path");
 const vscode = require("vscode");
-
 const {
-  findFile,
-  logMsg,
-  getApplicationMeta,
-  getPackageJSON,
-  extractPackages,
-  getFileContent,
-  logInFile,
+  GLOBAL_STATE_MANAGER,
   checkedIcon,
   unCheckedIcon,
-  initWebRenderer,
-  renderPackageScripts
+  getApplicationMeta,
+  initWebRenderer
 } = require("./util");
 
 const {
   REPORT_TEMPLATE,
   REPORT_TITLE,
-  IGNORE_PATHS,
   SECTIONS,
   SECTIONS_IDS,
-  KNOWLEDGE_CENTER,
-  SOURCE_TYPE
+  SOURCE_TYPE,
+  LOCAL_STORAGE,
+  PAGE_TITLE
 } = require("./constants");
 
 const { WebRenderer } = require("./web-renderer");
-const {
-  renderProcessedFiles
-} = require("./audit-generator-utilities/process-files-utilities");
 
 const {
   getNodeVersions
@@ -39,6 +27,7 @@ const { renderNPMSearch, showNPMPackageInfo } = require("./npm-search");
 const { renderDashboard } = require("./dashboard");
 const { renderAIDashboard } = require("./ai-dashboard");
 const { renderAISearchPage } = require("./ai-search-page");
+const { renderConfigPage } = require("./config-page");
 
 let webRenderer = new WebRenderer(REPORT_TEMPLATE, REPORT_TITLE);
 
@@ -98,7 +87,12 @@ const renderNPMAuditSectionContent = (sections) => {
   return selectionStr;
 };
 
-const renderBriefInfo = (sections) => {
+const renderBriefInfo = async (sections) => {
+  const serverURL = await GLOBAL_STATE_MANAGER.getItem(
+    webRenderer.context,
+    LOCAL_STORAGE.PROJECT_INFO_SERVER_URL
+  );
+
   let briefInfo = `
   <div class='brief-info'>
     <div class='flex-group'>`;
@@ -117,6 +111,18 @@ const renderBriefInfo = (sections) => {
 
   briefInfo += `
     </div>  
+
+    ${
+      serverURL
+        ? `<button type='button' 
+                    class='submit-btn hide-on-browser mt-1' 
+                    data-tooltip='Url: ${serverURL}'
+                    id='btn_submit_project_info'
+                    onclick="submitDashboardStat()">
+                    Submit Project Information
+                </button>`
+        : ""
+    }     
   </div>`;
 
   return briefInfo;
@@ -158,26 +164,10 @@ const renderTabsContent = (sections) => {
       </div>
   `;
 
-  {
-    /* sections.map((section) => {
-    htmlStr += `<div class="accordion-item" id="${section.id}_accordian_item" style="display:none">
-            <button class="accordion-header">
-            <div class='summary-box'>
-                <b>${section.label} Summary</b>
-                <div class='summary-value' id="${section.id}_accordian_summary"></div>
-            </div>
-            <span class="icon">+</span></button>
-            <div class="accordion-content">
-              <div id="${section.id}Label" class='p-1 mb-2'></div>
-            </div>
-        </div>`;
-  }); */
-  }
-
   return htmlStr;
 };
 
-const renderAppBodyContent = (content, sections) => {
+const renderAppBodyContent = async (content, sections) => {
   let htmlStr = ``;
   htmlStr += `
     <div id='selection_section'>
@@ -185,7 +175,7 @@ const renderAppBodyContent = (content, sections) => {
     </div>
 
     <div id='detailed_section' style="display:none">
-      ${renderBriefInfo(sections)}
+      ${await renderBriefInfo(sections)}
       <br />
 
       ${content}
@@ -237,7 +227,7 @@ const createHTMLReport = async (webRenderer) => {
     sections = sections.filter((s) => s.id !== SECTIONS_IDS.ESLINT);
   }
 
-  content = renderAppBodyContent(content, sections);
+  content = await renderAppBodyContent(content, sections);
   webRenderer.renderContent(content, REPORT_TITLE, SOURCE_TYPE.PROJECT);
 };
 
@@ -247,14 +237,19 @@ const renderNpmAuditReportCommand = async (webRenderer) => {
 };
 
 const npmAuditReportCommand = async (context, uri) => {
-  webRenderer = await initWebRenderer(webRenderer, context, uri);
+  webRenderer = await initWebRenderer(
+    webRenderer,
+    context,
+    PAGE_TITLE.AUDIT,
+    uri
+  );
   await renderNpmAuditReportCommand(webRenderer);
 };
 
-const runCommandOnSelection = async (context, data) => {
+const runCommandOnSelection = async (context, data, uri) => {
   if (data) {
     await webRenderer.init(context);
-    webRenderer.renderContent("", KNOWLEDGE_CENTER.TITLE, SOURCE_TYPE.PROJECT);
+    webRenderer.renderContent("", PAGE_TITLE.TITLE, SOURCE_TYPE.PROJECT);
     showNPMPackageInfo(webRenderer, data);
     return;
   }
@@ -265,27 +260,22 @@ const runCommandOnSelection = async (context, data) => {
     const selection = editor.selection;
     const selectedText = editor.document.getText(selection);
 
-    // getPackageVul(context, selectedText);
-
-    await webRenderer.init(context);
-    const content = `<iframe src='https://www.npmjs.com/package/${selectedText}' width="600" height="600" ></frame>`;
-    webRenderer.content = content;
-
-    webRenderer.renderContent(
-      content,
-      KNOWLEDGE_CENTER.TITLE,
-      SOURCE_TYPE.PROJECT
-    );
+    initializeNPMSearch(context, uri, selectedText);
   }
 };
 
 const initializeKnowledgeCenter = async (context, uri) => {
-  webRenderer = await initWebRenderer(webRenderer, context, uri);
+  webRenderer = await initWebRenderer(
+    webRenderer,
+    context,
+    PAGE_TITLE.TITLE,
+    uri
+  );
   await renderKnowledgeCenter(webRenderer, uri);
 };
 
 const renderInitializeNPMSearch = async (webRenderer, uri, pckName) => {
-  await renderNPMSearch(webRenderer, uri);
+  await renderNPMSearch(webRenderer);
 
   if (pckName) {
     showNPMPackageInfo(webRenderer, pckName);
@@ -295,23 +285,54 @@ const renderInitializeNPMSearch = async (webRenderer, uri, pckName) => {
 };
 
 const initializeNPMSearch = async (context, uri, pckName) => {
-  webRenderer = await initWebRenderer(webRenderer, context, uri, pckName);
+  webRenderer = await initWebRenderer(
+    webRenderer,
+    context,
+    PAGE_TITLE.NPM_SEARCH,
+    uri,
+    pckName
+  );
   await renderInitializeNPMSearch(webRenderer, uri, pckName);
 };
 
 const initializeDashboard = async (context, uri) => {
-  webRenderer = await initWebRenderer(webRenderer, context, uri);
+  webRenderer = await initWebRenderer(
+    webRenderer,
+    context,
+    PAGE_TITLE.DASHBOARD,
+    uri
+  );
   await renderDashboard(webRenderer, uri);
 };
 
 const initializeAIDashboard = async (context, uri) => {
-  webRenderer = await initWebRenderer(webRenderer, context, uri);
+  webRenderer = await initWebRenderer(
+    webRenderer,
+    context,
+    PAGE_TITLE.AI_DASHBOARD,
+    uri
+  );
   await renderAIDashboard(webRenderer, uri);
 };
 
 const initializeAISearch = async (context, uri) => {
-  webRenderer = await initWebRenderer(webRenderer, context, uri);
+  webRenderer = await initWebRenderer(
+    webRenderer,
+    context,
+    PAGE_TITLE.AI_SEARCH,
+    uri
+  );
   await renderAISearchPage(webRenderer);
+};
+
+const initializeConfig = async (context, uri) => {
+  webRenderer = await initWebRenderer(
+    webRenderer,
+    context,
+    PAGE_TITLE.CONFIGURATION,
+    uri
+  );
+  await renderConfigPage(webRenderer);
 };
 
 module.exports = {
@@ -324,5 +345,6 @@ module.exports = {
   renderInitializeNPMSearch,
   initializeDashboard,
   initializeAIDashboard,
-  initializeAISearch
+  initializeAISearch,
+  initializeConfig
 };

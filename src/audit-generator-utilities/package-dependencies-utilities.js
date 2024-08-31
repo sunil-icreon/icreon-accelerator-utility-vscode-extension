@@ -1,7 +1,4 @@
-const { MSGS, REPORT_TITLE, VUL_SEVERITY } = require("../constants");
-const util = require("util");
-const { PILLS, logInFile, cleanVersion } = require("../util");
-const { dirname } = require("path");
+const { PILLS, cleanVersion } = require("../util");
 
 const renderPackageTable = (dependencies, installedPackages, type) => {
   const packageKeys = Object.keys(dependencies || {});
@@ -28,11 +25,9 @@ const renderPackageTable = (dependencies, installedPackages, type) => {
   }
 
   listOfPackages.sort((a, b) => {
-    // Compare names first
     if (a.isChanged > b.isChanged) return -1;
     if (a.isChanged < b.isChanged) return 1;
 
-    // If names are equal, compare ages
     return b.type.localeCompare(a.type);
   });
 

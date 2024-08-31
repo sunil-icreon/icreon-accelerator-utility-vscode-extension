@@ -1,4 +1,4 @@
-const { KNOWLEDGE_CENTER, SOURCE_TYPE } = require("./constants");
+const { SOURCE_TYPE, PAGE_TITLE } = require("./constants");
 const { initializeAppInfo } = require("./util");
 const { renderAISearchTool } = require("./open-ai-util");
 
@@ -27,11 +27,7 @@ const renderAISearchPage = async (webRenderer) => {
 
   let content = await getWebviewContent(webRenderer);
   webRenderer.content = content;
-  webRenderer.renderContent(
-    content,
-    KNOWLEDGE_CENTER.AI_SEARCH,
-    SOURCE_TYPE.PROJECT
-  );
+  webRenderer.renderContent(content, PAGE_TITLE.AI_SEARCH, SOURCE_TYPE.PROJECT);
 };
 
 module.exports = {

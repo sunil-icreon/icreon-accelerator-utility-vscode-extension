@@ -1,3 +1,4 @@
+// @ts-nocheck
 const { getFileDataFromExtension } = require("../util");
 
 const KNOWLEDGE_TOPICS_IDS = {

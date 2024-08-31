@@ -1,19 +1,20 @@
 const {
+  PILLS,
   formatNumber,
   onylFileName,
   deleteFolderRecursive,
   getFileContent,
   getScanningHTML,
   getScanningHTMLSmall,
-  logMsg,
   convertSeconds,
-  PILLS,
-  NODE_API
+  getIgnoreFileFolder
 } = require("../util");
+
 const fs = require("fs");
 const util = require("util");
 const vscode = require("vscode");
-const { IGNORE_PATHS, PROJECT_STAT } = require("../constants");
+
+const { PROJECT_STAT } = require("../constants");
 
 const renderDuplicateCodes = (webRenderer, data) => {
   if (!data) {
@@ -48,7 +49,7 @@ const renderDuplicateCodes = (webRenderer, data) => {
     ts: new Date().toUTCString()
   };
 
-  NODE_API.sendProjectStat(webRenderer);
+  // NODE_API.sendProjectStat(webRenderer);
 
   webRenderer.sendMessageToUI("duplicateCodeContent", {
     htmlContent: renderDuplicateSummary(data),
@@ -282,11 +283,15 @@ const getDuplicateCodes = async (webRenderer) => {
   try {
     let ignoreStr = ``;
 
-    IGNORE_PATHS.FOLDER.map((itm) => {
+    const { ignoredFolders, ignoredFiles } = await getIgnoreFileFolder(
+      webRenderer.context
+    );
+
+    ignoredFolders.map((itm) => {
       ignoreStr += `**/${itm}/**/*.*,`;
     });
 
-    IGNORE_PATHS.FILES.map((itm) => {
+    ignoredFiles.map((itm) => {
       ignoreStr += `**/${itm},`;
     });
 
@@ -480,7 +485,7 @@ const renderScoreSummary = (data) => {
                     ${Number(score.halstead.bugs).toFixed(0)}
                   </td>
 
-                  <td class='text-right ${
+                  <td class='text-right no-wrap ${
                     score.fta_score > 60 ? "text-danger" : "text-moderate"
                   }'>${score.assessment}</td>
               </tr>`;

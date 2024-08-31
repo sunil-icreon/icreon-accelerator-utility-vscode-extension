@@ -15,13 +15,12 @@ const {
 } = require("./constants");
 
 const {
+  NODE_API,
   logMsg,
   logErrorMsg,
-  formatDate,
   saveVulDataInExtensionState,
   runOtherExtensionCommand,
   installExtension,
-  NODE_API,
   getExtensionFileSrc,
   icreonIcon
 } = require("./util");
@@ -78,6 +77,7 @@ const {
   aiSaveOpenAPIKey
 } = require("./ai-dashboard");
 const { searchInGPT } = require("./open-ai-util");
+const { saveConfigurations } = require("./config-page");
 
 let webviews = new Map();
 
@@ -182,6 +182,10 @@ class WebRenderer {
 
       case "ai_search":
         runOtherExtensionCommand(COMMANDS.AI_SEARCH, this.uri);
+        break;
+
+      case "config":
+        runOtherExtensionCommand(COMMANDS.CONFIGURATION, this.uri);
         break;
     }
   };
@@ -349,19 +353,10 @@ class WebRenderer {
 
           case "openNPMViewer":
             initializeNPMSearch(this.context, uri, message.pkgName);
-            // runOtherExtensionCommand(
-            //   `${extensionPrefix}.runCommandOnNPMPackageSearch`,
-            //   { pkgName: message.pkgName, uri: this.uri }
-            // );
             return;
 
           case "submitVulnerabilityData":
             saveVulDataInExtensionState(message.data, this.context);
-
-            // runOtherExtensionCommand(
-            //   `${extensionPrefix}.submitVulnerabilityData`,
-            //   message.data
-            // );
 
             return;
 
@@ -400,6 +395,10 @@ class WebRenderer {
 
           case "saveOpenAPIKey":
             aiSaveOpenAPIKey(this, message.apiKey);
+            break;
+
+          case "saveConfigurations":
+            saveConfigurations(this, message.data);
             break;
 
           case "aiWriteUnitTestForAllFiles":
@@ -464,12 +463,6 @@ class WebRenderer {
   };
 
   renderAppHeaderContent = async (reportTitle) => {
-    const logoPath = path.resolve(
-      this.extensionPath,
-      "images",
-      "icreon-logo.png"
-    );
-    const imageSrc = this.panel.webview.asWebviewUri(vscode.Uri.file(logoPath));
     return `
     <div class='app-header-section'>
         <div class='header-left-section'>
@@ -494,8 +487,6 @@ class WebRenderer {
                 </span>
             </span>
           </h3>
-
-          
         </div>
     </div>`;
   };
@@ -510,16 +501,12 @@ class WebRenderer {
     return getExtensionFileSrc(
       this.extensionPath,
       this.panel,
-      "media/script/webrenderer-script.js"
+      "out/webrenderer-script.js"
     );
   };
 
   getStyleSrc = () => {
-    return getExtensionFileSrc(
-      this.extensionPath,
-      this.panel,
-      "media/css/style.css"
-    );
+    return getExtensionFileSrc(this.extensionPath, this.panel, "out/style.css");
   };
   renderContent = async (content, reportTitle, sourceType) => {
     const scriptSrc = this.getScriptSrc();
@@ -582,6 +569,10 @@ class WebRenderer {
                     </li>`
                       : ""
                   }
+
+                    <li class='menu-li-item' id='li_config' >
+                      <a href='javascript:void(0)' class='no-link internal-link' onclick="renderPage('config')">Configuration</a>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -629,7 +620,8 @@ const createPanel = (title, extensionPath) => {
     {
       localResourceRoots: [
         vscode.Uri.file(path.join(extensionPath, "images")),
-        vscode.Uri.file(path.join(extensionPath, "media"))
+        vscode.Uri.file(path.join(extensionPath, "media")),
+        vscode.Uri.file(path.join(extensionPath, "out"))
       ],
       enableScripts: true,
       retainContextWhenHidden: true
@@ -722,8 +714,8 @@ const createReportFile = async (webRenderedRef, content, reportType) => {
     .app-footer{ display:none;}
     </style>`;
 
-    content += `<link href="media/css/style.css" rel="stylesheet"></link>`;
-    content += `<script src='media/script/webrenderer-script.js'></script>`;
+    content += `<link href="out/style.css" rel="stylesheet"></link>`;
+    content += `<script src='out/webrenderer-script.js'></script>`;
     let fileUri = folderUri.with({ path: `${reportFileName}.${reportType}` });
     let filters = null;
     let reportContent = content;

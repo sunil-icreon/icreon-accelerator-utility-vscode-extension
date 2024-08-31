@@ -1,17 +1,16 @@
 const { MSGS, PROJECT_STAT } = require("../constants");
 
 const {
+  PILLS,
   isLowerVersion,
-  svgIconForInstall,
   formatNumber,
   getScanningHTML,
   getScanningHTMLSmall,
-  PILLS,
   cleanVersion,
   runNPMCommand,
-  installIcon,
-  NODE_API
+  installIcon
 } = require("../util");
+
 const { renderAuditError } = require("./npm-audit-utilities");
 
 const getCurrentVersion = (packageName, packageJSON) => {
@@ -190,7 +189,7 @@ const renderOutdatedPackages = async (webRenderer, data) => {
     ts: new Date().toUTCString()
   };
 
-  NODE_API.sendProjectStat(webRenderer);
+  // NODE_API.sendProjectStat(webRenderer);
 
   webRenderer.outdatedPackages = listOfPackages;
   let vulStr = `

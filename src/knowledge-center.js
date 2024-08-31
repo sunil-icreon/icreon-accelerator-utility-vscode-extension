@@ -1,31 +1,26 @@
 const vscode = require("vscode");
 
-const {
-  KNOWLEDGE_CENTER,
-  EXECUTION_STATUS,
-  SOURCE_TYPE
-} = require("./constants");
+const { EXECUTION_STATUS, SOURCE_TYPE, PAGE_TITLE } = require("./constants");
 const {
   checkedIcon,
-  getScanningHTMLSmall,
   unCheckedIcon,
+  getScanningHTMLSmall,
   writeFile,
   getFileContent,
   checkIfFileExist,
   findFile,
   crossIconCircle,
   initializeAppInfo,
-  runNPMCommand,
-  renderPackageScripts,
-  logInFile
+  runNPMCommand
 } = require("./util");
+
 const {
   getTopics,
   STEP_COMMAND
 } = require("./knowledge-center-utilities/topics");
 
 let KNOWLEDGE_TOPICS = [];
-const getWebviewContent = (title) => {
+const getWebviewContent = () => {
   let topicStr = `
   <table class='table table-striped table-bordered table-sm tbl-knowledge' id='tblKnowledge'>
     <tr>
@@ -86,13 +81,9 @@ const renderKnowledgeCenter = async (webRenderer, fileURI) => {
 
     KNOWLEDGE_TOPICS = await getTopics(webRenderer);
 
-    let content = getWebviewContent(KNOWLEDGE_CENTER.TITLE);
+    let content = getWebviewContent();
     webRenderer.content = content;
-    webRenderer.renderContent(
-      content,
-      KNOWLEDGE_CENTER.TITLE,
-      SOURCE_TYPE.PROJECT
-    );
+    webRenderer.renderContent(content, PAGE_TITLE.TITLE, SOURCE_TYPE.PROJECT);
   });
 };
 

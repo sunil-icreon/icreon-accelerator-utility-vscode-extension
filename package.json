@@ -2,7 +2,7 @@
   "name": "icreon-accelerator-utility",
   "displayName": "Icreon Accelerator: Utilities",
   "version": "1.0.0",
-  "description": "Extension helps with below activities:\n1. Perform static code analysis to find vulnerabilities, outdated packages, EsLint issue, unused/duplicate code and licensed files.\n2. Provide NPM package viewer to search and install packages, along with displaying there vulnerabilities.\n3. Knowledge Center to implement/integrate defined solutions.\n4. AI Utilities to write unit tests for multiple files together.",
+  "description": "Extension help finding vulnerable/outdated npm packages, duplicate/unused code, analyze code for maintainability, provides UI to search/install packages along with displaying there vulnerabilities, provides UI to implement/integrate defined solutions and helps in writing unit test cases and performing ChatGPT searches.",
   "main": "./out/main.js",
   "icon": "images/icreon-icon.png",
   "publisher": "Icreon",
@@ -38,10 +38,6 @@
       {
         "command": "icreon-accelerator-utility.runCommandOnNPMPackageSearch",
         "title": "View Package Details"
-      },
-      {
-        "command": "icreon-accelerator-utility.openAIClearKey",
-        "title": "Icreon Accelerator: Clear OpenAI Key"
       },
       {
         "command": "icreon-accelerator-utility.knowledgeCenter",
@@ -108,19 +104,6 @@
       "type": "object",
       "title": ": Utilities",
       "properties": {
-        "icreon-accelerator-utility.apiURL": {
-          "type": "object",
-          "properties": {
-            "vulnerability": {
-              "type": "string"
-            },
-            "projectStatistics": {
-              "type": "string"
-            }
-          },
-          "default": {},
-          "description": "Submit data to server"
-        },
         "icreon-accelerator-utility.GPTModels": {
           "type": "array",
           "items": {
@@ -156,12 +139,14 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run esbuild-base --minify",
-    "esbuild-base": "esbuild ./src/extension.js --bundle --outfile=out/main.js --external:vscode  --format=cjs --platform=node",
+    "vscode:prepublish": "npm-run-all minify:css minify:script esbuild-base",
+    "esbuild-base": "esbuild ./src/extension.js --bundle --outfile=out/main.js --external:vscode  --format=cjs --platform=node & terser out/main.js --compress --mangle --output out/main.js",
     "esbuild": "npm run -S esbuild-base -- --sourcemap",
     "esbuild-watch": "npm run -S esbuild-base -- --sourcemap --watch",
     "build:package": "vsce package",
     "pretest": "npm run lint",
+    "minify:script": "terser src/media/script/webrenderer-script.js --compress --mangle --output out/webrenderer-script.js",
+    "minify:css": "cleancss -o out/style.css src/media/css/style.css",
     "vscode:postinstall": "npm install knip@5.27.3 fta-cli@2.0.0 jscpd@4.0.4  --legacy-peer-deps"
   },
   "dependencies": {
@@ -179,7 +164,10 @@
     "fta-cli": "2.0.0",
     "glob": "8.1.0",
     "jscpd": "4.0.4",
-    "vscode": "^1.1.34"
+    "vscode": "^1.1.34",
+    "npm-run-all": "^4.1.5",
+    "clean-css-cli": "^5.6.3",
+    "terser": "^5.31.6"
   },
   "files": [
     "out",

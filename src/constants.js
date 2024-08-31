@@ -1,5 +1,5 @@
 const extensionPrefix = `icreon-accelerator-utility`;
-const REPORT_TITLE = "Icreon Accelerator Audit Report";
+const REPORT_TITLE = "Icreon Accelerator: Utilities";
 const REPORT_TEMPLATE = "npm-audit-report";
 const REPORT_FOLDER_NAME = "icreon-accelerator-utility";
 const REPORT_FILE_NAME = "icreon-accelerator-utility";
@@ -50,21 +50,29 @@ const PROJECT_STAT = {
   ESLINT: "eslintStat",
   AUDIT: "auditStat",
   CODE_SCORE: "codeScoreStat",
-  DASHBOARD: "dashboardStat"
+  DASHBOARD: "dashboardStat",
+  DEPENDENCY: "dependencyStat"
 };
 const LOCAL_STORAGE = {
   RECENT_PACKAGE_VIEWED: "recent_package_viewed",
   VULNERABILITIES: "vulnerabilities",
-  OPEN_AI_KEY: "openAIKey"
+  OPEN_AI_KEY: "openAIKey",
+  IGNORE_PATH_STANDARD_FOLDERS: "ignoreStandardFolders",
+  IGNORE_PATH_STANDARD_FILES: "ignoreStandardFiles",
+  IGNORE_UNIT_TEST_FOLDERS: "ignoreUnitTestFolders",
+  IGNORE_UNIT_TEST_FILES: "ignoreUnitTestFiles",
+  VULNERABILITY_SERVER_URL: "vulnerabilityServerURL",
+  PROJECT_INFO_SERVER_URL: "projectInfoServerURL"
 };
 
-const KNOWLEDGE_CENTER = {
-  DASHBOARD: "Icreon Accelerator: Dashboard",
-  TITLE: "Icreon Accelerator Knowledge Center",
-  SUB_TITLE: "Collection of resources",
-  NPM_SEARCH_SUB_TITLE: "Search npm packages",
+const PAGE_TITLE = {
+  AUDIT: "Icreon Accelerator: Audit Report",
+  DASHBOARD: "Icreon Accelerator: Project Info",
+  TITLE: "Icreon Accelerator: Knowledge Center",
+  NPM_SEARCH: "Icreon Accelerator: Search NPM Packages",
   AI_DASHBOARD: "Icreon Accelerator: AI Dashboard",
-  AI_SEARCH: "Icreon Accelerator: AI Search"
+  AI_SEARCH: "Icreon Accelerator: AI Search",
+  CONFIGURATION: "Icreon Accelerator: Configuration"
 };
 
 const COMMANDS = {
@@ -75,9 +83,10 @@ const COMMANDS = {
   NPM_SEARCH: `${extensionPrefix}.npmSearch`,
   AI_DASHBOARD: `${extensionPrefix}.aiDashboard`,
   AI_SEARCH: `${extensionPrefix}.aiSearch`,
-  OPEN_AI_CLEAR_KEY: `${extensionPrefix}.openAIClearKey`,
+  REBRANDING_ASETS: `${extensionPrefix}.rebrandingAssets`,
   ON_SELECTION: `${extensionPrefix}.runCommandOnNPMPackageSearch`,
-  SUBMIT_VUL_DATA: `${extensionPrefix}.submitVulnerabilityData`
+  SUBMIT_VUL_DATA: `${extensionPrefix}.submitVulnerabilityData`,
+  CONFIGURATION: `${extensionPrefix}.configuration`
 };
 
 const MSGS = {
@@ -102,7 +111,7 @@ const SECTIONS_IDS = {
   UNUSED_CODES: "unused_codes"
 };
 
-const SECTIONS = [
+let SECTIONS = [
   {
     id: SECTIONS_IDS.VULNERABILITIES,
     label: "Vulnerabilities",
@@ -233,7 +242,7 @@ module.exports = {
   SECTIONS_IDS,
   SEVERITY_TYPE,
   LOCAL_STORAGE,
-  KNOWLEDGE_CENTER,
+  PAGE_TITLE,
   PROJECT_STAT,
   EXECUTION_STATUS,
   EXTENSION_CONFIG,

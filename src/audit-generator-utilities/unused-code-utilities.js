@@ -1,13 +1,13 @@
 const vscode = require("vscode");
 const {
+  PILLS,
   getScanningHTML,
   getScanningHTMLSmall,
   runNPMCommandWithoutPlatform,
-  PILLS,
   formatNumber,
-  renderAccordianItem,
-  NODE_API
+  renderAccordianItem
 } = require("../util");
+
 const { PROJECT_STAT } = require("../constants");
 const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 
@@ -201,7 +201,7 @@ const renderUnusedCodes = (webRenderer, data) => {
     ts: new Date().toUTCString()
   };
 
-  NODE_API.sendProjectStat(webRenderer);
+  // NODE_API.sendProjectStat(webRenderer);
 
   let content = renderUnusedFiles(files);
   content += `<div class='accordian'>`;

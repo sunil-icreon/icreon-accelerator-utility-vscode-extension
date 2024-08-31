@@ -1,14 +1,14 @@
 const vscode = require("vscode");
 const {
+  PILLS,
   logMsg,
   formatNumber,
   getScanningHTMLSmall,
-  PILLS,
   runNPMCommand,
-  logInFile,
-  NODE_API
+  getIgnoreFileFolder
 } = require("../util");
-const { IGNORE_PATHS, PROJECT_STAT } = require("../constants");
+
+const { PROJECT_STAT } = require("../constants");
 
 const renderLintCount = (webRenderer, total, progressHTML, lintIssues) => {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
@@ -71,7 +71,7 @@ const renderLintCount = (webRenderer, total, progressHTML, lintIssues) => {
     ts: new Date().toUTCString()
   };
 
-  NODE_API.sendProjectStat(webRenderer);
+  // NODE_API.sendProjectStat(webRenderer);
 
   webRenderer.sendMessageToUI("esLintContent", {
     htmlContent: vulStr,
@@ -187,9 +187,13 @@ const runESLint = async (webRenderer) => {
         searchPattern = `**/**/*.{ts,tsx,js,jsx}`;
       }
 
-      let ignorePattern = `**/{${IGNORE_PATHS.FOLDER.join(
+      const { ignoredFolders, ignoredFiles } = await getIgnoreFileFolder(
+        webRenderer.context
+      );
+
+      let ignorePattern = `**/{${ignoredFolders.join(",")},${ignoredFiles.join(
         ","
-      )},${IGNORE_PATHS.FILES.join(",")}}/**`;
+      )}}/**`;
 
       vscode.workspace.findFiles(searchPattern, ignorePattern).then((files) => {
         renderESLintResult(webRenderer, searchPattern, ignorePattern);

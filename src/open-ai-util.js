@@ -7,7 +7,13 @@ const {
   DEFAULT_GPT_MODELS,
   EXECUTION_STATUS
 } = require("./constants");
-const { getExtenConfigValue, logMsg, GLOBAL_STATE_MANAGER } = require("./util");
+
+const {
+  GLOBAL_STATE_MANAGER,
+  getExtenConfigValue,
+  logMsg,
+  getSearchingHTML
+} = require("./util");
 
 let openAIClient = null;
 
@@ -54,6 +60,18 @@ const callOpenAI = async (webRenderer, prompt, gptModel, cb) => {
       return;
     }
 
+    // const chatCompletion = await client.chat.completions.create({
+    //   messages: [
+    //     {
+    //       role: "user",
+    //       content: "How to scan vulnerabilities in react application"
+    //     }
+    //   ],
+    //   model: "gpt-3.5-turbo"
+    // });
+
+    // logInFile(JSON.stringify(chatCompletion), webRenderer.extensionPath);
+
     const stream = await client.chat.completions.create({
       model: gptModel,
       messages: [
@@ -72,7 +90,6 @@ const callOpenAI = async (webRenderer, prompt, gptModel, cb) => {
       compResp = [...compResp, chunk.choices];
       cb && cb(resp, null, false, compResp);
     }
-
     cb && cb(resp, null, true, compResp);
   } catch (e) {
     cb && cb([], e, true);
@@ -91,25 +108,10 @@ const renderAISearchTool = async (webRenderer, containerId, id) => {
   if (!openAPIKey) {
     htmlStr = `
     <div class='ai-unit-app'>
-        <h4 class='grey-header'>Search in ChatGPT</h4>
+        <h4 class='grey-header text-danger'>OpenAI Key Not Found!</h4>
         <div class='flex-group flex-justify-start'>
-          <div class='column-box  flex-grow-1'>
-            <div class='open-api-input box-1'>
-              <div class='field flex-grow-1'>
-                    <span class='field-label'>Open API Key</span>
-                    <input type='password' id='ai_open_ap_api_key' class='form-input' placeholder='Enter OpenAI API Key'  />
-                </div>
-
-                <div class='field'>
-                    <span class='field-label'>&nbsp;</span>
-                    <button type='button' 
-                        class='submit-btn hide-on-browser-1' 
-                        onclick="saveOpenAPIKey()">
-                        Save Key
-                      </button>
-                </div>
-            </div>
-          </div>
+           Please add 'Open API Key' via <a href='javascript:void(0)' class='no-link internal-link' onclick="renderPage('config')">Configuration</a> link.
+        </div>
     </div>`;
   } else {
     htmlStr += `
@@ -120,7 +122,7 @@ const renderAISearchTool = async (webRenderer, containerId, id) => {
             <div class='open-api-input '>
               <div class='field flex-grow-1'>
                     <span class='field-label'>Prompt</span>
-                    <input type='text' id="${id}_ai_search_input" class='form-input' placeholder='Enter prompt...'  />
+                    <input type='text' id="${id}_ai_search_input" onkeypress="handleOpenAISearchToolInputKeyPress(event, '${containerId}','${id}')" class='form-input' placeholder='Enter prompt...'  />
               </div>
 
               ${renderGPTModelDropdown(id)}
@@ -175,6 +177,12 @@ const searchInGPT = (webRenderer, data) => {
     logMsg("Prompt is required to proceed further.", true);
     return;
   }
+
+  webRenderer.sendMessageToUI("aiSearchInGPTContent", {
+    containerId,
+    status: EXECUTION_STATUS.FAILED,
+    htmlContent: getSearchingHTML("Thinking")
+  });
 
   callOpenAI(
     webRenderer,

@@ -2,14 +2,15 @@ const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
 const {
+  PILLS,
   logMsg,
   getScanningHTMLSmall,
-  PILLS,
   containsLicense,
   getFileExtension,
-  NODE_API
+  getIgnoreFileFolder
 } = require("../util");
-const { IGNORE_PATHS, PROJECT_STAT } = require("../constants");
+
+const { PROJECT_STAT } = require("../constants");
 
 const renderLicensedFiles = (
   webRenderer,
@@ -160,7 +161,8 @@ const renderLicensedtResult = (webRenderer, files) => {
       extFiles: externalFiles.length,
       ts: new Date().toUTCString()
     };
-    NODE_API.sendProjectStat(webRenderer);
+
+    // NODE_API.sendProjectStat(webRenderer);
   } catch (e) {
     webRenderer.sendMessageToUI("licensedContent", {
       htmlContent: "",
@@ -189,9 +191,13 @@ const findLicensedFiles = async (webRenderer) => {
         searchPattern = `**/**/*.{${filesExtension}}`;
       }
 
-      let ignorePattern = `**/{${IGNORE_PATHS.FOLDER.join(
+      const { ignoredFolders, ignoredFiles } = await getIgnoreFileFolder(
+        webRenderer.context
+      );
+
+      let ignorePattern = `**/{${ignoredFolders.join(",")},${ignoredFiles.join(
         ","
-      )},${IGNORE_PATHS.FILES.join(",")}}/**`;
+      )}}/**`;
 
       vscode.workspace.findFiles(searchPattern, ignorePattern).then((files) => {
         renderLicensedtResult(webRenderer, files);

@@ -1,12 +1,14 @@
 // @ts-nocheck
 const { marked } = require("marked");
 const {
-  KNOWLEDGE_CENTER,
   EXECUTION_STATUS,
   LOCAL_STORAGE,
-  SOURCE_TYPE
+  SOURCE_TYPE,
+  PAGE_TITLE
 } = require("./constants");
+
 const {
+  GLOBAL_STATE_MANAGER,
   initializeAppInfo,
   logMsg,
   getFileData,
@@ -17,8 +19,9 @@ const {
   getLoaderWithText,
   confirmMsg,
   getFileExtension,
-  GLOBAL_STATE_MANAGER
+  getIgnoreFileFolder
 } = require("./util");
+
 const {
   callOpenAI,
   getAIModels,
@@ -37,25 +40,9 @@ const getWebviewContent = async (webRenderer) => {
 
   if (!openAPIKey) {
     htmlStr = `<div class='ai-unit-app'>
-    <div class='ai-config-form'>
-      <div class='flex-group flex-justify-start'>
-        <div class='column-box  flex-grow-1'>
-          <div class='open-api-input box-1'>
-             <div class='field flex-grow-1'>
-                  <span class='field-label'>Open API Key</span>
-                  <input type='password' id='ai_open_ap_api_key' class='form-input' placeholder='Enter OpenAI API Key'  />
-              </div>
-
-              <div class='field'>
-                  <span class='field-label'>&nbsp;</span>
-                   <button type='button' 
-                      class='submit-btn hide-on-browser-1' 
-                      onclick="saveOpenAPIKey()">
-                      Save Key
-                    </button>
-              </div>
-            </div>
-          </div>
+        <h4 class='grey-header text-danger'>OpenAI Key Not Found!</h4>
+        <div class='flex-group flex-justify-start'>
+           Please add 'Open API Key' via <a href='javascript:void(0)' class='no-link internal-link' onclick="renderPage('config')">Configuration</a> link.
         </div>
       </div>
 `;
@@ -89,11 +76,6 @@ const getWebviewContent = async (webRenderer) => {
                   <input type='text' id='ai_unit_test_test_file_convention' class='form-input' placeholder="Default is 'spec'" value="spec" />
                 </div>
 
-                <div class='field'>
-                  <span class='field-label'>Auto Write</span>
-                  <input type="checkbox" class='mt-1' id="ai_chk_auto_write" onchange="handleAIAutoWrite()" name="chk_auto_write" value="false" />
-                </div>
-
                 <div class='field' id='ai_auto_write_option_box' style='display:none'>
                   <span class='field-label'>Action for existing files</span>
                   <div class='flex flex-align-center mt-1'>
@@ -109,6 +91,11 @@ const getWebviewContent = async (webRenderer) => {
                     <input type="radio" id="ai_rd_skip" name="ai_overrite_options" value="Skip" />
                     <label for="ai_rd_skip" class='radio-label'>Skip</label><br>
                   </div>
+                </div>
+
+                <div class='field'>
+                  <span class='field-label'>Auto Write</span>
+                  <input type="checkbox" class='mt-1' id="ai_chk_auto_write" onchange="handleAIAutoWrite()" name="chk_auto_write" value="false" />
                 </div>
 
                  ${aiModelOptionsStr}
@@ -246,7 +233,7 @@ const renderTestFiles = (files) => {
   return htmlStr;
 };
 
-const renderFileTable = (webRenderer, folderPath) => {
+const renderFileTable = async (webRenderer, folderPath) => {
   try {
     if (folderPath) {
       const isFile = getFileExtension(folderPath).length > 0;
@@ -266,14 +253,21 @@ const renderFileTable = (webRenderer, folderPath) => {
     }
 
     folderPath = folderPath || `${webRenderer.parentPath}/src`;
-    const allFiles = getAllFilesOfFolder(folderPath, [
-      "ts",
-      "tsx",
-      "js",
-      "jsx"
-    ]);
+
+    const { ignoredFolders, ignoredFiles } = await getIgnoreFileFolder(
+      webRenderer.context
+    );
+
+    const allFiles = getAllFilesOfFolder(
+      folderPath,
+      ["ts", "tsx", "js", "jsx"],
+      ignoredFolders,
+      ignoredFiles
+    );
+
     if (allFiles && allFiles.length > 0) {
       webRenderer.tempData = {
+        ...webRenderer.tempData,
         files: allFiles
       };
 
@@ -303,11 +297,7 @@ const renderAIDashboard = async (webRenderer, folderURI) => {
 const renderDashboardContent = async (webRenderer) => {
   let content = await getWebviewContent(webRenderer);
   webRenderer.content = content;
-  webRenderer.renderContent(
-    content,
-    KNOWLEDGE_CENTER.AI_DASHBOARD,
-    SOURCE_TYPE.AI
-  );
+  webRenderer.renderContent(content, PAGE_TITLE.AI_DASHBOARD, SOURCE_TYPE.AI);
   const apiKey = await getOpenAPIKey(webRenderer.context);
 
   webRenderer.tempData = {
@@ -316,7 +306,7 @@ const renderDashboardContent = async (webRenderer) => {
   };
 
   let { folderURI } = webRenderer.tempData;
-  renderFileTable(webRenderer, folderURI);
+  await renderFileTable(webRenderer, folderURI);
 };
 
 const updateTestProgress = (webRenderer, msg, infoType, index) => {
@@ -405,145 +395,157 @@ const processCurrentFile = async (webRenderer, index, runNext) => {
     runNext
   };
 
-  const filePath = files[index].fullPath;
+  if (files[index]) {
+    const filePath = files[index].fullPath;
+    if (filePath) {
+      let relativePath = getRelativePath(filePath, sourceFolder);
+      const fileName = files[index].name; // relativePath.split("\\").pop();
+      const testFileName = createSpecFileName(
+        fileName,
+        testFileNamingConvention
+      );
 
-  if (filePath) {
-    let relativePath = getRelativePath(filePath, sourceFolder);
-    const fileName = files[index].name; // relativePath.split("\\").pop();
-    const testFileName = createSpecFileName(fileName, testFileNamingConvention);
+      relativePath = relativePath
+        .replace(fileName, testFileName)
+        .replaceAll("\\", "/");
 
-    relativePath = relativePath
-      .replace(fileName, testFileName)
-      .replaceAll("\\", "/");
+      relativePath = `${webRenderer.parentPath}/${testFolderName}/${relativePath}`;
 
-    relativePath = `${webRenderer.parentPath}/${testFolderName}/${relativePath}`;
+      const ifTestFileExist = checkIfFileExist(relativePath);
 
-    const ifTestFileExist = checkIfFileExist(relativePath);
+      const fileContent = getFileData(filePath);
 
-    const fileContent = getFileData(filePath);
+      let testFileContent = ``;
+      if (ifTestFileExist) {
+        testFileContent = getFileData(relativePath);
+      }
 
-    let testFileContent = ``;
-    if (ifTestFileExist) {
-      testFileContent = getFileData(relativePath);
-    }
-
-    const promptQuery = `${prompt}
+      const promptQuery = `${prompt}
     ${fileContent}
     `;
 
-    webRenderer.sendMessageToUI("aiUnitTestCurrentContent", {
-      currentFileName: fileName,
-      currentPageNumber: `${index + 1} of ${files.length} File(s)`,
-      // codeFileContent: ifTestFileExist ? testFileContent : "", // Uncomment below code to display existing test file content
-      showCompare: false, //ifTestFileExist
-      showStopExecution: runNext
-    });
+      webRenderer.sendMessageToUI("aiUnitTestCurrentContent", {
+        currentFileName: fileName,
+        currentPageNumber: `${index + 1} of ${files.length} File(s)`,
+        // codeFileContent: ifTestFileExist ? testFileContent : "", // Uncomment below code to display existing test file content
+        showCompare: false, //ifTestFileExist
+        showStopExecution: runNext
+      });
 
-    updateTestProgress(
-      webRenderer,
-      `Generating unit test cases.`,
-      EXECUTION_STATUS.RUNNING,
-      index
-    );
+      updateTestProgress(
+        webRenderer,
+        `Generating unit test cases.`,
+        EXECUTION_STATUS.RUNNING,
+        index
+      );
 
-    webRenderer.sendMessageToUI("aiUnitTestGeneratedContent", {
-      generatedContent: getScanningHTMLSmall(25, 25)
-    });
+      webRenderer.sendMessageToUI("aiUnitTestGeneratedContent", {
+        generatedContent: getScanningHTMLSmall(25, 25)
+      });
 
-    callOpenAI(webRenderer, promptQuery, gptModel, (resp, err, isComplete) => {
-      if (err) {
-        updateTestProgress(
-          webRenderer,
-          `Something went wrong [${JSON.stringify(err)}]`,
-          EXECUTION_STATUS.FAILED,
-          index
-        );
-        return;
-      }
-
-      if (resp) {
-        if (terminated === 1) {
-          updateTestProgress(
-            webRenderer,
-            `Execution terminated.`,
-            EXECUTION_STATUS.FAILED
-          );
-
-          webRenderer.sendMessageToUI("aiUnitTestUpdateActionContent", {
-            htmlContent: "",
-            index
-          });
-
-          webRenderer.sendMessageToUI("aiUnitTestGeneratedContent", {
-            generatedContent: "Execution terminated."
-          });
-          return;
-        }
-
-        webRenderer.sendMessageToUI("aiUnitTestGeneratedContent", {
-          generatedContent: marked((resp || []).join(""))
-        });
-
-        if (isComplete) {
-          updateTestProgress(
-            webRenderer,
-            `Test cases generated successfully.`,
-            EXECUTION_STATUS.COMPLETE,
-            index
-          );
-
-          webRenderer.tempData = {
-            ...webRenderer.tempData,
-            index,
-            files,
-            generatedResponse: resp.join(""),
-            fileWritePath: relativePath,
-            fileName,
-            filePath,
-            testFileName,
-            testFileContent
-          };
-
-          if (autoRight) {
-            if (!ifTestFileExist) {
-              aiWriteTestsToFile(webRenderer, TEST_BTN_ACTIONS.WRITE);
-              return;
-            } else {
-              switch (overWriteAction) {
-                case TEST_BTN_ACTIONS.OVERRIGHT:
-                  aiWriteTestsToFile(webRenderer, TEST_BTN_ACTIONS.OVERRIGHT);
-                  return;
-
-                case TEST_BTN_ACTIONS.APPEND:
-                  aiWriteTestsToFile(webRenderer, TEST_BTN_ACTIONS.APPEND);
-                  return;
-              }
-            }
-          }
-
-          const actionBtnHTML = getActionBtnsForTD(
-            ifTestFileExist
-              ? TEST_BTN_ACTIONS.OVERRIGHT
-              : TEST_BTN_ACTIONS.WRITE
-          );
-
-          if (ifTestFileExist) {
+      callOpenAI(
+        webRenderer,
+        promptQuery,
+        gptModel,
+        (resp, err, isComplete) => {
+          if (err) {
             updateTestProgress(
               webRenderer,
-              `Choose action to update: `,
-              EXECUTION_STATUS.CONFIRM,
+              `Something went wrong [${JSON.stringify(err)}]`,
+              EXECUTION_STATUS.FAILED,
               index
             );
+            return;
           }
 
-          webRenderer.sendMessageToUI("aiUnitTestUpdateActionContent", {
-            htmlContent: actionBtnHTML,
-            index,
-            showAction: actionBtnHTML ? true : false
-          });
+          if (resp) {
+            if (terminated === 1) {
+              updateTestProgress(
+                webRenderer,
+                `Execution terminated.`,
+                EXECUTION_STATUS.FAILED
+              );
+
+              webRenderer.sendMessageToUI("aiUnitTestUpdateActionContent", {
+                htmlContent: "",
+                index
+              });
+
+              webRenderer.sendMessageToUI("aiUnitTestGeneratedContent", {
+                generatedContent: "Execution terminated."
+              });
+              return;
+            }
+
+            webRenderer.sendMessageToUI("aiUnitTestGeneratedContent", {
+              generatedContent: marked((resp || []).join(""))
+            });
+
+            if (isComplete) {
+              updateTestProgress(
+                webRenderer,
+                `Test cases generated successfully.`,
+                EXECUTION_STATUS.COMPLETE,
+                index
+              );
+
+              webRenderer.tempData = {
+                ...webRenderer.tempData,
+                index,
+                files,
+                generatedResponse: resp.join(""),
+                fileWritePath: relativePath,
+                fileName,
+                filePath,
+                testFileName,
+                testFileContent
+              };
+
+              if (autoRight) {
+                if (!ifTestFileExist) {
+                  aiWriteTestsToFile(webRenderer, TEST_BTN_ACTIONS.WRITE);
+                  return;
+                } else {
+                  switch (overWriteAction) {
+                    case TEST_BTN_ACTIONS.OVERRIGHT:
+                      aiWriteTestsToFile(
+                        webRenderer,
+                        TEST_BTN_ACTIONS.OVERRIGHT
+                      );
+                      return;
+
+                    case TEST_BTN_ACTIONS.APPEND:
+                      aiWriteTestsToFile(webRenderer, TEST_BTN_ACTIONS.APPEND);
+                      return;
+                  }
+                }
+              }
+
+              const actionBtnHTML = getActionBtnsForTD(
+                ifTestFileExist
+                  ? TEST_BTN_ACTIONS.OVERRIGHT
+                  : TEST_BTN_ACTIONS.WRITE
+              );
+
+              if (ifTestFileExist) {
+                updateTestProgress(
+                  webRenderer,
+                  `Choose action to update: `,
+                  EXECUTION_STATUS.CONFIRM,
+                  index
+                );
+              }
+
+              webRenderer.sendMessageToUI("aiUnitTestUpdateActionContent", {
+                htmlContent: actionBtnHTML,
+                index,
+                showAction: actionBtnHTML ? true : false
+              });
+            }
+          }
         }
-      }
-    });
+      );
+    }
   }
 };
 

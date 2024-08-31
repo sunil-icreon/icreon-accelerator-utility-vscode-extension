@@ -6,10 +6,13 @@ const {
   LOCAL_STORAGE,
   PROJECT_STAT
 } = require("../constants");
+
 const util = require("util");
+
 const {
   REPORT_UTIL,
   PILLS,
+  NODE_API,
   severityTag,
   formatNumber,
   filterBySeverity,
@@ -21,8 +24,7 @@ const {
   sortByKey,
   renderNPMViewerLink,
   getPackageId,
-  appendInExtensionState,
-  NODE_API
+  appendInExtensionState
 } = require("../util");
 
 const { dirname } = require("path");
@@ -131,7 +133,7 @@ const submitVulDataToKC = async (directPackageVulnerabilities, webRenderer) => {
       webRenderer.context
     );
 
-    NODE_API.saveVul(vulSummary);
+    NODE_API.saveVul(webRenderer, vulSummary);
 
     // webRenderer.sendMessageToUI("submitVulnerabilityDataContent", {
     //   vulSummary
@@ -479,6 +481,15 @@ const renderNPMAuditResponse = async (webRenderer, data) => {
     totalVulnerabilities: critical + high + moderate + low + info
   };
 
+  webRenderer.projectStat[PROJECT_STAT.DEPENDENCY] = {
+    prodDependencies: prod,
+    devDependencies: dev,
+    peerDependencies: peer,
+    optionalDependencies: optional,
+    t: dev + prod + peer + optional,
+    ts: new Date().toUTCString()
+  };
+
   webRenderer.projectStat[PROJECT_STAT.AUDIT] = {
     c: critical,
     h: high,
@@ -500,7 +511,7 @@ const renderNPMAuditResponse = async (webRenderer, data) => {
     submitVulDataToKC(processedData, webRenderer);
   }
 
-  NODE_API.sendProjectStat(webRenderer);
+  // NODE_API.sendProjectStat(webRenderer);
 
   webRenderer.sendMessageToUI("npmAuditContent", {
     htmlContent: content,

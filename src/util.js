@@ -7,12 +7,12 @@ const path = require("path");
 const util = require("util");
 const semver = require("semver");
 const { window, workspace, commands } = require("vscode");
+
 const {
   SEVERITY_TYPE,
   LOCAL_STORAGE,
   IGNORE_PATHS,
-  extensionPrefix,
-  EXTENSION_CONFIG
+  extensionPrefix
 } = require("./constants");
 
 const confirmMsg = (msg, cb) => {
@@ -92,14 +92,16 @@ const appendInExtensionState = async (keyName, data, id, context) => {
   let currentValue = (await context.globalState.get(keyName)) || [];
 
   if (currentValue && currentValue.length > 0) {
-    data.map((item) => {
-      const foundIndex = currentValue.findIndex((c) => c[id] === item[id]);
-      if (foundIndex === -1) {
-        currentValue = [...currentValue, item];
-      } else {
-        currentValue[foundIndex] = item;
-      }
-    });
+    if (data && Array.isArray(data)) {
+      data.map((item) => {
+        const foundIndex = currentValue.findIndex((c) => c[id] === item[id]);
+        if (foundIndex === -1) {
+          currentValue = [...currentValue, item];
+        } else {
+          currentValue[foundIndex] = item;
+        }
+      });
+    }
   } else {
     currentValue = data;
   }
@@ -981,7 +983,7 @@ const httpAPI = (requestUrl, method, postData) => {
       });
 
       res.on("end", () => {
-        if (res.statusCode === 200) {
+        if (res.statusCode < 400) {
           try {
             const json = JSON.parse(data);
             resolve(json || {});
@@ -1038,9 +1040,10 @@ const renderPackageScripts = (webRenderer) => {
   }
 };
 
-const initWebRenderer = async (webRenderer, context, uri, pckName) => {
+const initWebRenderer = async (webRenderer, context, title, uri, pckName) => {
   // await context.globalState.update(LOCAL_STORAGE.VULNERABILITIES, undefined);
 
+  webRenderer.title = title;
   if (webRenderer.initialized) {
     webRenderer.pckName = pckName;
     return webRenderer;
@@ -1074,7 +1077,7 @@ const initWebRenderer = async (webRenderer, context, uri, pckName) => {
     );
   }
 
-  NODE_API.getVul((resp) => {
+  NODE_API.getVul(webRenderer, (resp) => {
     if (resp) {
       appendInExtensionState(
         LOCAL_STORAGE.VULNERABILITIES,
@@ -1141,12 +1144,18 @@ const getExtenConfigValue = (configName, defaultValue) => {
 };
 
 const NODE_API = {
-  getVulnerabilityURL: () =>
-    getExtenConfigValue(`${EXTENSION_CONFIG.API_URL.VULNERABILITY}`),
-  geProjectStatURL: () =>
-    getExtenConfigValue(`${EXTENSION_CONFIG.API_URL.PROJECT_STATS}`),
-  getVul: (cb) => {
-    const apiURL = NODE_API.getVulnerabilityURL();
+  getVulnerabilityURL: async (webRenderer) =>
+    await GLOBAL_STATE_MANAGER.getItem(
+      webRenderer.context,
+      LOCAL_STORAGE.VULNERABILITY_SERVER_URL
+    ),
+  geProjectStatURL: async (webRenderer) =>
+    await GLOBAL_STATE_MANAGER.getItem(
+      webRenderer.context,
+      LOCAL_STORAGE.PROJECT_INFO_SERVER_URL
+    ),
+  getVul: async (webRenderer, cb) => {
+    const apiURL = await NODE_API.getVulnerabilityURL(webRenderer);
     if (!apiURL) {
       return;
     }
@@ -1155,16 +1164,16 @@ const NODE_API = {
       cb && cb(resp);
     });
   },
-  saveVul: (vulList) => {
-    const apiURL = NODE_API.getVulnerabilityURL();
+  saveVul: async (webRenderer, vulList) => {
+    const apiURL = await NODE_API.getVulnerabilityURL(webRenderer);
     if (!apiURL) {
       return;
     }
 
     httpAPI(`${apiURL}`, "POST", JSON.stringify({ data: vulList }));
   },
-  sendProjectStat: (webRenderer) => {
-    const apiURL = NODE_API.geProjectStatURL();
+  sendProjectStat: async (webRenderer) => {
+    const apiURL = await NODE_API.geProjectStatURL(webRenderer);
     if (!apiURL) {
       return;
     }
@@ -1181,13 +1190,27 @@ const NODE_API = {
           description
         }
       })
-    );
+    )
+      .then(() => {
+        logMsg(`Project information submitted successfully.`, true);
+      })
+      .catch((e) => {
+        logMsg(`Failed submitting project info [${JSON.stringify(e)}].`, true);
+      })
+      .finally(() => {
+        webRenderer.sendMessageToUI("submitProjectInfoContent", {
+          isLoading: false
+        });
+      });
   }
 };
 
-const getAllFilesOfFolder = (dirPath, allowedExtension) => {
-  const ignoreFolders = IGNORE_PATHS.FOLDER;
-  const ignoreFiles = IGNORE_PATHS.FILES;
+const getAllFilesOfFolder = (
+  dirPath,
+  allowedExtension,
+  ignoredFolders,
+  ignoredFiles
+) => {
   const items = fs.readdirSync(dirPath);
   let allFiles = [];
   items.forEach((item) => {
@@ -1195,14 +1218,19 @@ const getAllFilesOfFolder = (dirPath, allowedExtension) => {
     const stats = fs.statSync(fullPath);
 
     if (stats.isDirectory()) {
-      if (!ignoreFolders.includes(item)) {
+      if (!ignoredFolders.includes(item)) {
         allFiles = [
           ...allFiles,
-          ...getAllFilesOfFolder(fullPath, allowedExtension)
+          ...getAllFilesOfFolder(
+            fullPath,
+            allowedExtension,
+            ignoredFolders,
+            ignoredFiles
+          )
         ];
       }
     } else {
-      if (!ignoreFiles.includes(item)) {
+      if (!ignoredFiles.includes(item)) {
         const ext = getFileExtension(item);
         if (allowedExtension.includes(ext)) {
           allFiles = [...allFiles, { name: item, fullPath }];
@@ -1214,27 +1242,29 @@ const getAllFilesOfFolder = (dirPath, allowedExtension) => {
   return allFiles;
 };
 
-const generateTree = (dirPath, allowedExtension) => {
-  const ignoreFolders = IGNORE_PATHS.FOLDER;
-  const ignoreFiles = IGNORE_PATHS.FILES;
+const generateTree = async (webRenderer, dirPath, allowedExtension) => {
+  const { ignoredFolders, ignoredFiles } = await getIgnoreFileFolder(
+    webRenderer.context
+  );
+
   const items = fs.readdirSync(dirPath);
   const tree = [];
 
-  items.forEach((item) => {
+  items.forEach(async (item) => {
     const fullPath = path.join(dirPath, item);
     const stats = fs.statSync(fullPath);
 
     if (stats.isDirectory()) {
-      if (!ignoreFolders.includes(item)) {
+      if (!ignoredFolders.includes(item)) {
         tree.push({
           name: item,
           type: "folder",
           fullPath: fullPath,
-          children: generateTree(fullPath)
+          children: await generateTree(webRenderer, fullPath, allowedExtension)
         });
       }
     } else {
-      if (!ignoreFiles.includes(item)) {
+      if (!ignoredFiles.includes(item)) {
         const ext = getFileExtension(item);
         if (allowedExtension.includes(ext)) {
           tree.push({
@@ -1283,6 +1313,41 @@ const renderTree = (outputArr, data) => {
 
   outputArr = [...outputArr, `</ul>`];
   return outputArr;
+};
+
+const renderFormField = (label, field, hint) => {
+  return `
+  <div class='form-field'>
+      <span class='field-label'>${label}</span>
+      ${field}
+      ${hint ? `<div class='field-hint'>${hint}</div>` : ""}
+  </div>
+  `;
+};
+
+const getIgnoreFileFolder = async (context, folderKey, fileKey) => {
+  folderKey = folderKey || LOCAL_STORAGE.IGNORE_PATH_STANDARD_FOLDERS;
+  fileKey = fileKey || LOCAL_STORAGE.IGNORE_PATH_STANDARD_FILES;
+
+  let ignoredFolder = await GLOBAL_STATE_MANAGER.getItem(context, folderKey);
+
+  if (!ignoredFolder) {
+    ignoredFolder = IGNORE_PATHS[folderKey].join(", ");
+  }
+
+  let ignoredFiles = await GLOBAL_STATE_MANAGER.getItem(context, fileKey);
+
+  if (!ignoredFiles) {
+    ignoredFiles = IGNORE_PATHS[fileKey].join(", ");
+  }
+
+  ignoredFolder = ignoredFolder || "";
+  ignoredFiles = ignoredFiles || "";
+
+  return {
+    ignoredFolders: ignoredFolder.split(",").map((itm) => itm.trim()),
+    ignoredFiles: ignoredFiles.split(",").map((itm) => itm.trim())
+  };
 };
 
 module.exports = {
@@ -1357,6 +1422,8 @@ module.exports = {
   getLoaderWithText,
   getExtenConfigValue,
   getExtensionFileSrc,
+  renderFormField,
+  getIgnoreFileFolder,
   NODE_API,
   GLOBAL_STATE_MANAGER
 };

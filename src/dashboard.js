@@ -1,23 +1,21 @@
 const vscode = require("vscode");
+
 const {
-  KNOWLEDGE_CENTER,
-  IGNORE_PATHS,
   PROJECT_STAT,
-  EXTENSION_CONFIG,
-  SOURCE_TYPE
+  SOURCE_TYPE,
+  LOCAL_STORAGE,
+  PAGE_TITLE
 } = require("./constants");
+
 const {
+  PILLS,
+  GLOBAL_STATE_MANAGER,
   initializeAppInfo,
   renderPackageScripts,
   logMsg,
   getFileTypeByExt,
-  PILLS,
-  logInFile,
-  getExtenConfigValue,
-  runNPMCommand
+  getIgnoreFileFolder
 } = require("./util");
-const { renderAISearchTool } = require("./open-ai-util");
-const path = require("path");
 
 let featuresProcessed = 0;
 
@@ -80,13 +78,10 @@ const isNextJSFramework = (webRenderer) => {
   return false;
 };
 
-const getWebviewContent = (webRenderer) => {
+const getWebviewContent = async (webRenderer) => {
   let htmlStr = "";
   if (webRenderer.pkgJSON) {
     const {
-      name,
-      description,
-      version,
       devDependencies,
       dependencies,
       peerDependencies,
@@ -112,8 +107,9 @@ const getWebviewContent = (webRenderer) => {
       framework: framework
     });
 
-    const serverURL = getExtenConfigValue(
-      EXTENSION_CONFIG.API_URL.PROJECT_STATS
+    const serverURL = await GLOBAL_STATE_MANAGER.getItem(
+      webRenderer.context,
+      LOCAL_STORAGE.PROJECT_INFO_SERVER_URL
     );
 
     htmlStr = `
@@ -125,9 +121,11 @@ const getWebviewContent = (webRenderer) => {
             ${
               serverURL
                 ? `<button type='button' 
+                      data-tooltip='Url: ${serverURL}'
                       class='submit-btn hide-on-browser' 
+                      id='btn_submit_project_info'
                       onclick="submitDashboardStat()">
-                      Submit Project Stat
+                      Submit Project Information
                   </button>`
                 : ""
             }
@@ -342,11 +340,14 @@ const renderFileWithExtensions = (webRenderer, files) => {
   });
 };
 
-const renderESLintStatus = (webRenderer) => {
-  let ignorePattern = `**/{${[
-    ...IGNORE_PATHS.FOLDER,
-    ...IGNORE_PATHS.FILES
-  ].join(",")}}/**`;
+const renderESLintStatus = async (webRenderer) => {
+  const { ignoredFolders, ignoredFiles } = await getIgnoreFileFolder(
+    webRenderer.context
+  );
+
+  let ignorePattern = `**/{${[...ignoredFolders, ...ignoredFiles].join(
+    ","
+  )}}/**`;
 
   findFiles(
     webRenderer,
@@ -407,11 +408,14 @@ const renderESLintStatus = (webRenderer) => {
   );
 };
 
-const renderDockerStatus = (webRenderer) => {
-  let ignorePattern = `**/{${[
-    ...IGNORE_PATHS.FOLDER,
-    ...IGNORE_PATHS.FILES
-  ].join(",")}}/**`;
+const renderDockerStatus = async (webRenderer) => {
+  const { ignoredFolders, ignoredFiles } = await getIgnoreFileFolder(
+    webRenderer.context
+  );
+
+  let ignorePattern = `**/{${[...ignoredFolders, ...ignoredFiles].join(
+    ","
+  )}}/**`;
 
   findExactFiles(
     webRenderer,
@@ -437,11 +441,14 @@ const renderDockerStatus = (webRenderer) => {
   );
 };
 
-const renderWebServerStatus = (webRenderer) => {
-  let ignorePattern = `**/{${[
-    ...IGNORE_PATHS.FOLDER,
-    ...IGNORE_PATHS.FILES
-  ].join(",")}}/**`;
+const renderWebServerStatus = async (webRenderer) => {
+  const { ignoredFolders, ignoredFiles } = await getIgnoreFileFolder(
+    webRenderer.context
+  );
+
+  let ignorePattern = `**/{${[...ignoredFolders, ...ignoredFiles].join(
+    ","
+  )}}/**`;
 
   findExactFiles(webRenderer, "nginx.conf", ignorePattern, (files) => {
     let isWebserver = false;
@@ -686,11 +693,15 @@ const renderNextCSP = (webRenderer, ignorePattern) => {
   }
 };
 
-const renderCSPStatus = (webRenderer) => {
-  let ignorePattern = `**/{${[
-    ...IGNORE_PATHS.CSP_FOLDER,
-    ...IGNORE_PATHS.FILES
-  ].join(",")}}/**`;
+const renderCSPStatus = async (webRenderer) => {
+  const { ignoredFolders, ignoredFiles } = await getIgnoreFileFolder(
+    webRenderer.context,
+    "CSP_FOLDER"
+  );
+
+  let ignorePattern = `**/{${[...ignoredFolders, ...ignoredFiles].join(
+    ","
+  )}}/**`;
 
   const isNext = isNextJSFramework(webRenderer);
   if (isNext) {
@@ -741,12 +752,17 @@ const updateProjectStat = (webRenderer, data) => {
   };
 };
 
-const renderUnitTestStatus = (webRenderer) => {
+const renderUnitTestStatus = async (webRenderer) => {
   const jestPackages = ["vitest", "jest", "mocha"];
-  let ignorePattern = `**/{${[
-    ...IGNORE_PATHS.UNIT_TEST_FOLDER,
-    ...IGNORE_PATHS.UNIT_TEST_FILES
-  ].join(",")}}/**`;
+  const { ignoredFolders, ignoredFiles } = await getIgnoreFileFolder(
+    webRenderer.context,
+    "UNIT_TEST_FOLDER",
+    "UNIT_TEST_FILES"
+  );
+
+  let ignorePattern = `**/{${[...ignoredFolders, ...ignoredFiles].join(
+    ","
+  )}}/**`;
 
   findFiles(
     webRenderer,
@@ -942,23 +958,19 @@ const renderSuggestedExtensions = (webRenderer) => {
 const renderDashboard = async (webRenderer, fileURI) => {
   featuresProcessed = 0;
   await initializeAppInfo(webRenderer);
-  let content = getWebviewContent(webRenderer);
+  let content = await getWebviewContent(webRenderer);
   webRenderer.content = content;
-  webRenderer.renderContent(
-    content,
-    KNOWLEDGE_CENTER.DASHBOARD,
-    SOURCE_TYPE.PROJECT
-  );
+  webRenderer.renderContent(content, PAGE_TITLE.DASHBOARD, SOURCE_TYPE.PROJECT);
   processFiles(webRenderer, (files) => {
     renderFileWithExtensions(webRenderer, files);
   });
 
-  renderUnitTestStatus(webRenderer);
+  await renderUnitTestStatus(webRenderer);
   renderESLintStatus(webRenderer);
   renderPrettierStatus(webRenderer);
-  renderDockerStatus(webRenderer);
-  renderWebServerStatus(webRenderer);
-  renderCSPStatus(webRenderer);
+  await renderDockerStatus(webRenderer);
+  await renderWebServerStatus(webRenderer);
+  await renderCSPStatus(webRenderer);
 
   setTimeout(() => {
     renderSuggestedExtensions(webRenderer);
@@ -1017,10 +1029,13 @@ const findFiles = (webRenderer, searchExtensions, ignorePattern, cb) => {
 };
 
 const processFiles = async (webRenderer, cb) => {
-  let ignorePattern = `**/{${[
-    ...IGNORE_PATHS.FOLDER,
-    ...IGNORE_PATHS.FILES
-  ].join(",")}}/**`;
+  const { ignoredFolders, ignoredFiles } = await getIgnoreFileFolder(
+    webRenderer.context
+  );
+
+  let ignorePattern = `**/{${[...ignoredFolders, ...ignoredFiles].join(
+    ","
+  )}}/**`;
 
   findFiles(webRenderer, "ts,tsx,js,jsx,scss,css", ignorePattern, (files) => {
     cb(files);

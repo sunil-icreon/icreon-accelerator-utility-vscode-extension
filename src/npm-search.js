@@ -1,22 +1,22 @@
-const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
 const util = require("util");
 const MAX_VERSION_COUNT = 5;
-const { KNOWLEDGE_CENTER, LOCAL_STORAGE, SOURCE_TYPE } = require("./constants");
+const { LOCAL_STORAGE, SOURCE_TYPE, PAGE_TITLE } = require("./constants");
 
 const {
   checkedIcon,
+  hrDivider,
+  PILLS,
+  NODE_API,
   getScanningHTMLSmall,
   crossIcon,
   formatDate,
   getSearchingHTML,
   runNPMCommand,
-  hrDivider,
   isStringifiedObject,
   formatBytes,
   sortVersions,
-  PILLS,
   appendInExtensionState,
   readFromExtensionState,
   crossIconCircle,
@@ -25,13 +25,10 @@ const {
   formatNumber,
   getPackageId,
   timeAgo,
-  getApplicationMeta,
   initializeAppInfo,
-  httpAPI,
-  logMsg,
-  renderPackageScripts,
-  NODE_API
+  httpAPI
 } = require("./util");
+
 const { marked } = require("marked");
 
 const getWebviewContent = () => {
@@ -175,11 +172,6 @@ const versionTableTR = (pkg, index, parentPath, vulCache) => {
 };
 
 const renderPackageInfo = async (webRenderer, pck) => {
-  // await webRenderer.context.globalState.update(
-  //   LOCAL_STORAGE.VULNERABILITIES,
-  //   undefined
-  // );
-
   if (!pck) {
     webRenderer.sendMessageToUI("npmPackageInfoContentLoader", {
       htmlContent: `<div  class='flex-1'>
@@ -385,19 +377,12 @@ const renderRecentViewed = async (webRenderer) => {
   }
 };
 
-const renderNPMSearch = async (webRenderer, fileURI) => {
-  vscode.workspace.openTextDocument(fileURI).then(async (document) => {
-    await initializeAppInfo(webRenderer);
-
-    let content = getWebviewContent();
-    webRenderer.content = content;
-    webRenderer.renderContent(
-      content,
-      KNOWLEDGE_CENTER.TITLE,
-      SOURCE_TYPE.PROJECT
-    );
-    renderRecentViewed(webRenderer);
-  });
+const renderNPMSearch = async (webRenderer) => {
+  await initializeAppInfo(webRenderer);
+  let content = getWebviewContent();
+  webRenderer.content = content;
+  webRenderer.renderContent(content, PAGE_TITLE.TITLE, SOURCE_TYPE.PROJECT);
+  renderRecentViewed(webRenderer);
 };
 
 const packageItemHTML = (pck, exactMatch) => {
@@ -752,7 +737,7 @@ const renderVulnerabilityData = (
 
   htmlStr += `${vulnerabilityColumn(pckName, version, vulForCache)}`;
 
-  NODE_API.saveVul([vulForCache]);
+  NODE_API.saveVul(webRenderer, [vulForCache]);
 
   appendInExtensionState(
     LOCAL_STORAGE.VULNERABILITIES,

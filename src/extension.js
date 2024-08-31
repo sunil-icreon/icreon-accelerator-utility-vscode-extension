@@ -1,5 +1,7 @@
 const vscode = require("vscode");
+
 const { registerCommand, appendInExtensionState, logMsg } = require("./util");
+
 const {
   npmAuditReportCommand,
   initializeKnowledgeCenter,
@@ -7,10 +9,11 @@ const {
   runCommandOnSelection,
   initializeDashboard,
   initializeAIDashboard,
-  initializeAISearch
+  initializeAISearch,
+  initializeConfig
 } = require("./audit-generator");
+
 const { COMMANDS, LOCAL_STORAGE } = require("./constants");
-const { clearOpenAIKey } = require("./ai-dashboard");
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -35,15 +38,6 @@ async function activate(context) {
   //     // Update your extension's behavior based on the new setting value
   //   }
   // });
-
-  // clear openAI Key
-  const clearOpenAICmd = vscode.commands.registerCommand(
-    COMMANDS.OPEN_AI_CLEAR_KEY,
-    async () => {
-      await clearOpenAIKey(context);
-    }
-  );
-  context.subscriptions.push(clearOpenAICmd);
 
   //dashboard
   const dashboardCmd = vscode.commands.registerCommand(
@@ -99,7 +93,7 @@ async function activate(context) {
         }
       }
 
-      runCommandOnSelection(context);
+      runCommandOnSelection(context, null, data);
     }
   );
   context.subscriptions.push(textSelectionCmd);
@@ -140,6 +134,15 @@ async function activate(context) {
     }
   );
   context.subscriptions.push(aiSearchPageCmd);
+
+  // AI Search Page
+  const configCmd = vscode.commands.registerCommand(
+    COMMANDS.CONFIGURATION,
+    async (uri) => {
+      initializeConfig(context, uri);
+    }
+  );
+  context.subscriptions.push(configCmd);
 }
 
 function deactivate() {}

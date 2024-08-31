@@ -1,4 +1,5 @@
 // @ts-nocheck
+
 const vscode = acquireVsCodeApi();
 
 var allSections = [
@@ -163,6 +164,13 @@ function handleAIAutoWrite() {
   }
 }
 
+function handleOpenAISearchToolInputKeyPress(event, containerId, id) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    aiSearchInGPT(containerId, id);
+  }
+}
+
 function aiSearchInGPT(containerId, id) {
   const promptInput = document.getElementById(`${id}_ai_search_input`);
   if (promptInput) {
@@ -233,6 +241,40 @@ function saveOpenAPIKey() {
       });
     }
   }
+}
+
+const getFieldValue = (fieldKey, defaualtValue) => {
+  const filedControl = document.getElementById(fieldKey);
+
+  if (!filedControl) {
+    return defaualtValue;
+  }
+
+  const val = (filedControl.value || "").trim();
+  return val || defaualtValue;
+};
+
+function saveConfigurations() {
+  const apiKey = getFieldValue("open_ai_api_key");
+  const ignoreStandarFolders = getFieldValue("ignore_standard_folders");
+  const ignoreStandarFiles = getFieldValue("ignore_standard_files");
+  const ignoreUnitTestFolders = getFieldValue("ignore_unit_test_folders");
+  const ignoreUnitTestFiles = getFieldValue("ignore_unit_test_files");
+  const projectInfoServerURL = getFieldValue("project_info_url");
+  const vulnerabilityServerURL = getFieldValue("vulnerability_url");
+
+  vscode.postMessage({
+    command: "saveConfigurations",
+    data: {
+      apiKey,
+      ignoreStandarFolders,
+      ignoreStandarFiles,
+      ignoreUnitTestFolders,
+      ignoreUnitTestFiles,
+      projectInfoServerURL,
+      vulnerabilityServerURL
+    }
+  });
 }
 
 function writeUnitTests(singleRunIndex) {
@@ -312,7 +354,20 @@ function renderPage(pageID) {
   });
 }
 
+function updateSubmitProjInfoBtn(isLoading) {
+  const submitBtn = document.getElementById("btn_submit_project_info");
+  if (submitBtn) {
+    submitBtn.innerHTML = isLoading
+      ? "Submitting..."
+      : "Submit Project Information";
+
+    submitBtn.disabled = isLoading;
+  }
+}
+
 function submitDashboardStat() {
+  updateSubmitProjInfoBtn(true);
+
   vscode.postMessage({
     command: "submitDashboardStat"
   });
@@ -366,6 +421,7 @@ function toggleChecklistItem(sectionId) {
   const sectionIndex = (allSections || [])
     .filter((section) => !section.silent)
     .findIndex((sec) => sec.id === sectionId);
+
   if (sectionIndex > -1) {
     allSections[sectionIndex].selected = !allSections[sectionIndex].selected;
 
@@ -937,6 +993,10 @@ window.addEventListener("message", (event) => {
         `${data.containerId}_search_output`,
         data.htmlContent ? true : false
       );
+      break;
+
+    case "submitProjectInfoContent":
+      updateSubmitProjInfoBtn(false);
       break;
   }
 });
