@@ -189,18 +189,47 @@ const getActionBtnsForTD = (action) => {
       return "";
   }
 };
-const renderTestFiles = (files) => {
+
+const isTestFileExist = (webRenderer, file) => {
+  const {
+    testFolderName = "__tests__",
+    testFileNamingConvention = "spec",
+    sourceFolder = "src"
+  } = webRenderer.tempData;
+
+  const filePath = file.fullPath;
+
+  if (filePath) {
+    let relativePath = getRelativePath(filePath, sourceFolder);
+    const fileName = file.name;
+    const testFileName = createSpecFileName(fileName, testFileNamingConvention);
+
+    relativePath = relativePath
+      .replace(fileName, testFileName)
+      .replaceAll("\\", "/");
+
+    relativePath = `${webRenderer.parentPath}/${testFolderName}/${relativePath}`;
+
+    return checkIfFileExist(relativePath);
+  }
+
+  return false;
+};
+
+const renderTestFiles = (webRenderer, files) => {
   let htmlStr = ``;
   htmlStr += `<table class='table table-striped table-bordered table-sm simple-table'>`;
 
   htmlStr += `<tr>
-      <th class='text-align-left'>#</th>
+    <th class='text-align-left'>#</th>
       <th class='text-align-left'>File</th>
       <th class='text-align-left'>Status</th>
     </tr>`;
 
-  files.forEach((fl, index) => {
+  files.map((fl, index) => {
     if (fl) {
+      const testFileExist = isTestFileExist(webRenderer, fl);
+
       htmlStr += `<tr>
         <td>${index + 1}</td>
         <td>
@@ -214,7 +243,14 @@ const renderTestFiles = (files) => {
 
         <td>
           <div class='flex-group'>
-              <div id='ai_unit_td_${index}_status' class='progress-msg-box'>Not started</div>
+              <div id='ai_unit_td_${index}_status' class='progress-msg-box'>
+                ${
+                  testFileExist
+                    ? "<span class='text-warning'>Test file exist</span>"
+                    : "Not started"
+                } 
+              </div>
+
               <div id='ai_unit_td_${index}_action_btns' class='progress-actions flex flex-justify-start flex-gap-10'>
                   <button type='button' 
                       class='submit-btn mr-1 hide-on-browser-1' 
@@ -244,7 +280,7 @@ const renderFileTable = async (webRenderer, folderPath) => {
           ...webRenderer.tempData,
           files: selectedFile
         };
-        const htmlStr = renderTestFiles(selectedFile);
+        const htmlStr = renderTestFiles(webRenderer, selectedFile);
         webRenderer.sendMessageToUI("aiFileTreeContent", {
           htmlContent: htmlStr
         });
@@ -271,7 +307,7 @@ const renderFileTable = async (webRenderer, folderPath) => {
         files: allFiles
       };
 
-      const htmlStr = renderTestFiles(allFiles);
+      const htmlStr = renderTestFiles(webRenderer, allFiles);
       webRenderer.sendMessageToUI("aiFileTreeContent", {
         htmlContent: htmlStr
       });
@@ -363,8 +399,7 @@ const getRelativePath = (fullPath, rootFolder) => {
 const writeUnitTestsForFile = (webRenderer) => {
   const { index } = webRenderer.tempData;
 
-  // files.length
-  if (index >= 15) {
+  if (index >= files.length) {
     return "";
   }
 
@@ -399,7 +434,7 @@ const processCurrentFile = async (webRenderer, index, runNext) => {
     const filePath = files[index].fullPath;
     if (filePath) {
       let relativePath = getRelativePath(filePath, sourceFolder);
-      const fileName = files[index].name; // relativePath.split("\\").pop();
+      const fileName = files[index].name;
       const testFileName = createSpecFileName(
         fileName,
         testFileNamingConvention
@@ -412,6 +447,28 @@ const processCurrentFile = async (webRenderer, index, runNext) => {
       relativePath = `${webRenderer.parentPath}/${testFolderName}/${relativePath}`;
 
       const ifTestFileExist = checkIfFileExist(relativePath);
+
+      // Do not generate AI repsonse, if SKIP action is selected for existing files.
+      if (
+        runNext &&
+        ifTestFileExist &&
+        overWriteAction === TEST_BTN_ACTIONS.SKIP
+      ) {
+        updateTestProgress(
+          webRenderer,
+          `File not updated.`,
+          EXECUTION_STATUS.FAILED,
+          index
+        );
+
+        webRenderer.tempData = {
+          ...webRenderer.tempData,
+          index: index + 1
+        };
+
+        writeUnitTestsForFile(webRenderer);
+        return;
+      }
 
       const fileContent = getFileData(filePath);
 
@@ -463,7 +520,8 @@ const processCurrentFile = async (webRenderer, index, runNext) => {
               updateTestProgress(
                 webRenderer,
                 `Execution terminated.`,
-                EXECUTION_STATUS.FAILED
+                EXECUTION_STATUS.FAILED,
+                index
               );
 
               webRenderer.sendMessageToUI("aiUnitTestUpdateActionContent", {
@@ -658,7 +716,7 @@ const aiSaveOpenAPIKey = (webRenderer, openAPIKey) => {
 const aiStartWritingUnitTests = (webRenderer, testConfig) => {
   const {
     prompt,
-    testFolderName = "src/__tests__",
+    testFolderName = "__tests__",
     testFileNamingConvention = "spec",
     sourceFolder = "src",
     autoRight,
