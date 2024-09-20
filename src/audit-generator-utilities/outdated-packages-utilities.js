@@ -62,6 +62,15 @@ const getOutdatedRow = (type, packages) => {
              <td class='text-right'>${packages.length}</td>
           </tr>`;
 };
+
+const calculateSeverity = (currentVersion, wantedVersion) => {
+  if (isLowerVersion(currentVersion, wantedVersion)) {
+    return SEVERITY.HIGH;
+  }
+
+  return SEVERITY.MEDIUM;
+};
+
 const renderOutdatedPackages = async (webRenderer, data) => {
   if (!data || Object.keys(data).length === 0) {
     webRenderer.sendMessageToUI("outdatedPackageContent", {
@@ -121,20 +130,18 @@ const renderOutdatedPackages = async (webRenderer, data) => {
   );
 
   let listOfPackages = [];
+
   for (const [key, itm] of Object.entries(data)) {
     const currentVersion =
       itm.current || getCurrentVersion(key, webRenderer?.pkgJSON || null);
+
     listOfPackages = [
       ...listOfPackages,
       {
         key,
         ...itm,
         current: currentVersion,
-        severity: currentVersion
-          ? isLowerVersion(currentVersion, itm.wanted)
-            ? SEVERITY.HIGH
-            : SEVERITY.MEDIUM
-          : SEVERITY.MEDIUM,
+        severity: calculateSeverity(currentVersion, itm.wanted),
         type: dependencies.includes(key)
           ? "Prod"
           : devDependencies.includes(key)
@@ -283,7 +290,25 @@ const renderOutdatedPackages = async (webRenderer, data) => {
     summaryTableData:
       listOfPackages.length > 0
         ? `
-        <h3 class='grey-header'>Outdated Packages: ${totalOutdatedPackages} package(s)</h3> 
+        <h3 class='grey-header'>Outdated Packages: ${totalOutdatedPackages} package(s)</h3>
+        
+        ${
+          (listOfPackages || []).length > 0
+            ? `
+           <div class='grey-header text-sm'>
+                  <div>
+                    <b>* High: </b>  <i>The package has a major/minor version difference. This means there are breaking changes that you might need to address in your code when updating to the latest version.</i>
+                  </div>
+
+                  <div>
+                    <b># Moderate: </b> <i>The wanted version is different from the latest version. This means the installed version is out-of-date and the wanted version specified in your package.json is not the latest.</i>
+                  </div>
+                  <hr/> 
+                  <br/>
+                </div>
+          `
+            : ""
+        }
         <div class='flex-1'>
           <div class="content">
           ${
@@ -292,17 +317,8 @@ const renderOutdatedPackages = async (webRenderer, data) => {
                 <table class='table table-striped table-bordered table-sm simple-table'> 
                   <tr>
                     <th class='text-align-left'>Type</th>
-                    <th class='text-right text-high'>
-                      Critical 
-                      <span class="info-icon" data-tooltip="The package has a major version difference. This means there are breaking changes that you might need to address in your code when updating to the latest version.">&#x2139;
-                      </span>
-                    </th>
-
-                    <th class='text-right text-moderate'>
-                      Moderate 
-                      <span class="info-icon" data-tooltip="The wanted version is different from the latest version. This means the installed version is out-of-date and the wanted version specified in your package.json is not the latest.">&#x2139;
-                      </span>
-                    </th>
+                    <th class='text-right text-high'>Critical *</th>
+                    <th class='text-right text-moderate'>Moderate #</th>
                     <th class='text-right'>Total</th>
                   </tr>
 

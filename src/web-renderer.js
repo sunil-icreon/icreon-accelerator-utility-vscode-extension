@@ -4,6 +4,91 @@ const vscode = require("vscode");
 const { posix } = require("path");
 const { window, ViewColumn, workspace, Uri } = require("vscode");
 
+const printScript = `function openTab(evt, tabName) {
+  let i, tabcontent, tablinks;
+  let activeTab = null;
+
+  tabcontent = document.getElementsByClassName("tab-content");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+    tabcontent[i].classList.remove("active");
+
+    if (tabcontent[i].id === tabName) {
+      activeTab = tabcontent[i];
+    }
+  }
+
+  tablinks = document.getElementsByClassName("tab-button");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].classList.remove("active");
+  }
+
+  evt.currentTarget.classList.add("active");
+
+  const activeTabBtn = document.getElementById(tabName + "_accordian_item");
+  if (activeTabBtn) {
+    activeTabBtn.classList.add("active");
+  }
+
+  if (activeTab) {
+    activeTab.style.display = "block";
+    activeTab.classList.add("active");
+  }
+
+  let infoBoxes = document.getElementsByClassName("info-box");
+  for (i = 0; i < infoBoxes.length; i++) {
+    infoBoxes[i].classList.remove("selected");
+  }
+
+  const activeInfoBox = document.getElementById(tabName + "_info_box");
+  if (activeInfoBox) {
+    activeInfoBox.classList.add("selected");
+  }
+}
+
+function initAccordian() {
+  var headers = document.querySelectorAll(".accordion-header");
+  headers.forEach(function (header) {
+    const isClickAdded = header.getAttribute("on-click-added") === "1";
+
+    if (!isClickAdded) {
+      header.setAttribute("on-click-added", "1");
+      header.addEventListener("click", function () {
+        var content = header.nextElementSibling;
+        var icon = header.querySelector(".icon");
+        var isOpen =
+          content.style.display === "block" || content.style.display === "flex";
+
+        // Close all accordion contents
+        document
+          .querySelectorAll(".accordion-content")
+          .forEach(function (item) {
+            item.style.display = "none";
+          });
+
+        // Reset all icons
+        document.querySelectorAll(".icon").forEach(function (icon) {
+          icon.classList.remove("rotate");
+          icon.textContent = "+";
+        });
+
+        // Toggle the clicked accordion item
+        if (!isOpen) {
+          content.style.display = "block";
+          icon.classList.add("rotate");
+          icon.textContent = "−";
+        }
+      });
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  initAccordian();
+});
+
+`;
+
 const {
   REPORT_FILE_NAME,
   REPORT_FOLDER_NAME,
@@ -22,7 +107,8 @@ const {
   runOtherExtensionCommand,
   installExtension,
   getExtensionFileSrc,
-  icreonIcon
+  icreonIcon,
+  getFileData
 } = require("./util");
 
 const { runESLint } = require("./audit-generator-utilities/eslint-utilities");
@@ -158,7 +244,7 @@ class WebRenderer {
     }
   };
 
-  renderOtherFeaturePage = (pageID) => {
+  renderOtherFeaturePage = (pageID, sourceType) => {
     switch (pageID) {
       case "dashboard":
         runOtherExtensionCommand(COMMANDS.DASHBOARD, this.uri);
@@ -185,7 +271,7 @@ class WebRenderer {
         break;
 
       case "config":
-        runOtherExtensionCommand(COMMANDS.CONFIGURATION, this.uri);
+        runOtherExtensionCommand(COMMANDS.CONFIGURATION, this.uri, sourceType);
         break;
     }
   };
@@ -348,7 +434,7 @@ class WebRenderer {
             return;
 
           case "renderPage":
-            this.renderOtherFeaturePage(message.pageID);
+            this.renderOtherFeaturePage(message.pageID, message.sourceType);
             return;
 
           case "openNPMViewer":
@@ -571,7 +657,7 @@ class WebRenderer {
                   }
 
                     <li class='menu-li-item' id='li_config' >
-                      <a href='javascript:void(0)' class='no-link internal-link' onclick="renderPage('config')">Configuration</a>
+                      <a href='javascript:void(0)' class='no-link internal-link' onclick="renderPage('config','${sourceType}')">Configuration</a>
                     </li>
                   </ul>
                 </div>
@@ -703,6 +789,9 @@ const createReportFile = async (webRenderedRef, content, reportType) => {
     `${REPORT_FOLDER_NAME}/${REPORT_FILE_NAME}`
   );
 
+  const cssFilePath = path.join(webRenderedRef.extensionPath, `/out/style.css`);
+  const styleContent = await getFileData(cssFilePath);
+
   try {
     webRenderedRef.sendMessageToUI("downloadingStart");
     content += `<style>.header-link-actions { display: none;} body, table { font-size:12px!important;}
@@ -714,8 +803,9 @@ const createReportFile = async (webRenderedRef, content, reportType) => {
     .app-footer{ display:none;}
     </style>`;
 
-    content += `<link href="out/style.css" rel="stylesheet"></link>`;
-    content += `<script src='out/webrenderer-script.js'></script>`;
+    content += `<style>${styleContent}</style>`;
+    content += `<script>${printScript}</script>`;
+
     let fileUri = folderUri.with({ path: `${reportFileName}.${reportType}` });
     let filters = null;
     let reportContent = content;

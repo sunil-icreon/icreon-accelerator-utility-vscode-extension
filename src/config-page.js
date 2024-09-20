@@ -179,7 +179,7 @@ const saveConfigurations = async (webRenderer, data) => {
     logErrorMsg(`Error saving configurations.`);
   }
 };
-const renderConfigPage = async (webRenderer) => {
+const renderConfigPage = async (webRenderer, sourceType) => {
   await initializeAppInfo(webRenderer);
 
   let content = await getWebviewContent(webRenderer);
@@ -187,7 +187,7 @@ const renderConfigPage = async (webRenderer) => {
   webRenderer.renderContent(
     content,
     PAGE_TITLE.CONFIGURATION,
-    SOURCE_TYPE.PROJECT
+    sourceType || SOURCE_TYPE.PROJECT
   );
 };
 

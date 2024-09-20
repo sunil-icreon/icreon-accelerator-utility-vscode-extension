@@ -318,7 +318,9 @@ const getDuplicateCodes = async (webRenderer) => {
         } else {
           webRenderer.sendMessageToUI("duplicateCodeContent", {
             htmlContent: "",
-            Count: `Something went wrong, while finding duplicate codes.`,
+            Count: `-`,
+            subInfo: `Something went wrong, while finding duplicate codes.`,
+
             showSummary: false
           });
         }
@@ -326,19 +328,16 @@ const getDuplicateCodes = async (webRenderer) => {
       .catch(() => {
         webRenderer.sendMessageToUI("duplicateCodeContent", {
           htmlContent: ``,
-          Count: `Something went wrong, while finding duplicate codes.`,
+          Count: `-1`,
+          subInfo: `Something went wrong, while finding duplicate codes.`,
           showSummary: false
         });
       });
-
-    // await exec(
-    //   `npx jscpd -r json ${webRenderer.parentPath} --ignore "**/node_modules/**/*.*" --output "${reportFilePath}"`,
-    //   { windowsHide: true }
-    // );
   } catch (output) {
     webRenderer.sendMessageToUI("duplicateCodeContent", {
       htmlContent: ``,
-      Count: `Something went wrong, while finding duplicate codes.`,
+      Count: "-",
+      subInfo: `Something went wrong, while finding duplicate codes.`,
       showSummary: false
     });
   }

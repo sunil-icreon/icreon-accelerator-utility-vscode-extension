@@ -511,7 +511,20 @@ const renderNPMAuditResponse = async (webRenderer, data) => {
     submitVulDataToKC(processedData, webRenderer);
   }
 
-  // NODE_API.sendProjectStat(webRenderer);
+  const count = {
+    direct: {
+      c: filterBySeverity(directPackages, VUL_SEVERITY.CRITICAL).length,
+      h: filterBySeverity(directPackages, VUL_SEVERITY.HIGH).length,
+      m: filterBySeverity(directPackages, VUL_SEVERITY.MODERATE).length,
+      l: filterBySeverity(directPackages, VUL_SEVERITY.LOW).length
+    },
+    transitive: {
+      c: filterBySeverity(transientPackages, VUL_SEVERITY.CRITICAL).length,
+      h: filterBySeverity(transientPackages, VUL_SEVERITY.HIGH).length,
+      m: filterBySeverity(transientPackages, VUL_SEVERITY.MODERATE).length,
+      l: filterBySeverity(transientPackages, VUL_SEVERITY.LOW).length
+    }
+  };
 
   webRenderer.sendMessageToUI("npmAuditContent", {
     htmlContent: content,
@@ -537,45 +550,63 @@ const renderNPMAuditResponse = async (webRenderer, data) => {
 
             <tr>
               <td>Direct</td>
-              <td class='text-right text-critical'>
-                ${
-                  filterBySeverity(directPackages, VUL_SEVERITY.CRITICAL).length
-                }
+              <td class='text-right 
+                ${count.direct.c > 0 ? "text-critical" : "text-grey"}'
+              >
+                ${count.direct.c}
               </td>
-              <td class='text-right text-high'>
-              ${filterBySeverity(directPackages, VUL_SEVERITY.HIGH).length}</td>
-              <td class='text-right text-moderate'>
-              ${filterBySeverity(directPackages, VUL_SEVERITY.MODERATE).length}
+
+              <td class='text-right 
+                ${count.direct.h > 0 ? "text-high" : "text-grey"}'
+              >
+                ${count.direct.h}
               </td>
-              <td class='text-right text-low'>${
-                filterBySeverity(directPackages, VUL_SEVERITY.LOW).length
-              }
+
+              <td class='text-right 
+                ${count.direct.m > 0 ? "text-moderate" : "text-grey"}'
+              >
+                ${count.direct.m}
               </td>
-              <td class='text-right'><b>${directPackages.length}</b></td>
+
+              <td class='text-right 
+                ${count.direct.l > 0 ? "text-low" : "text-grey"}'
+              >
+                ${count.direct.l}
+              </td>
+
+              <td class='text-right text-bold'>
+                  ${directPackages.length}
+              </td>
             </tr>
 
             <tr>
-              <td>Transient</td>
-              <td class='text-right text-critical'>
-              ${
-                filterBySeverity(transientPackages, VUL_SEVERITY.CRITICAL)
-                  .length
-              }
+              <td>Transitive</td>
+              <td class='text-right 
+                ${count.transitive.c > 0 ? "text-critical" : "text-grey"}'
+              >
+                ${count.transitive.c}
               </td>
-              <td class='text-right text-high'>
-              ${
-                filterBySeverity(transientPackages, VUL_SEVERITY.HIGH).length
-              }</td>
-              <td class='text-right text-moderate'>
-              ${
-                filterBySeverity(transientPackages, VUL_SEVERITY.MODERATE)
-                  .length
-              }
+
+              <td class='text-right 
+                ${count.transitive.h > 0 ? "text-high" : "text-grey"}'
+              >
+                ${count.transitive.h}
               </td>
-              <td class='text-right text-low'>${
-                filterBySeverity(transientPackages, VUL_SEVERITY.LOW).length
-              }</td>
-              <td class='text-right text-bold'>${transientPackages.length}</td>
+
+              <td class='text-right 
+                ${count.transitive.m > 0 ? "text-moderate" : "text-grey"}'
+              >
+                ${count.transitive.m}
+              </td>
+
+              <td class='text-right 
+                ${count.transitive.l > 0 ? "text-low" : "text-grey"}'
+              >
+                ${count.transitive.l}
+              </td>
+              <td class='text-right text-bold'>
+                ${transientPackages.length}
+              </td>
             </tr>
           
             <tr>

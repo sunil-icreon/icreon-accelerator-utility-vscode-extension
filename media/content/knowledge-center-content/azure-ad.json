@@ -24,7 +24,7 @@
       "description": "\n        <div class='b'>Below variables will be added in '.env' file.</b>\n        <div class='code-snippet'>\n        <pre>\n          <code>\nREACT_APP_AZURE_CLIENTID=YOUR_CLIENTID\nREACT_APP_AZURE_TENENTID=https://login.microsoftonline.com/YOUR_TENANTID\nREACT_APP_REDIRECTURI=https://localhost:3000\n          </code>\n        </pre>\n      </div>"
     }
   ],
-  "info": "\n    <h1>Integrated MSAL with Azure AD in a React app.</h1>\n    <p>Integrating Microsoft Authentication Library (MSAL) with Azure Active Directory (AD) in a React app involves several steps. </p>\n    <p><b>Below changes will be made.</b></p>\n    ",
+  "info": "\n    <h1>Integrate MSAL with Azure AD in a React app.</h1>\n    <p>Integrating Microsoft Authentication Library (MSAL) with Azure Active Directory (AD) in a React app involves several steps. </p>\n    <p><b>Below changes will be made.</b></p>\n    ",
   "steps": [
     {
       "id": 1,

@@ -397,7 +397,7 @@ const getRelativePath = (fullPath, rootFolder) => {
 };
 
 const writeUnitTestsForFile = (webRenderer) => {
-  const { index } = webRenderer.tempData;
+  const { index, files } = webRenderer.tempData;
 
   if (index >= files.length) {
     return "";
@@ -732,7 +732,7 @@ const aiStartWritingUnitTests = (webRenderer, testConfig) => {
     return;
   }
 
-  const { files } = webRenderer.tempData;
+  const { files } = webRenderer.tempData || {};
 
   if (!files || files.length === 0) {
     webRenderer.sendMessageToUI("aiUnitTestFilesContent", {

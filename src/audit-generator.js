@@ -325,14 +325,19 @@ const initializeAISearch = async (context, uri) => {
   await renderAISearchPage(webRenderer);
 };
 
-const initializeConfig = async (context, uri) => {
+const initializeConfig = async (
+  context,
+  uri,
+  sourceType = SOURCE_TYPE.PROJECT
+) => {
   webRenderer = await initWebRenderer(
     webRenderer,
     context,
     PAGE_TITLE.CONFIGURATION,
     uri
   );
-  await renderConfigPage(webRenderer);
+
+  await renderConfigPage(webRenderer, sourceType);
 };
 
 module.exports = {

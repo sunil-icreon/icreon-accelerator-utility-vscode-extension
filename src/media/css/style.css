@@ -166,6 +166,10 @@ body {
 .text-green {
   color: #1a7f50 !important;
 }
+.text-grey {
+  color: var(--text-grey) !important;
+}
+
 .ml10 {
   margin-left: 10px;
 }

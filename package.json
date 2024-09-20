@@ -147,7 +147,7 @@
     "pretest": "npm run lint",
     "minify:script": "terser src/media/script/webrenderer-script.js --compress --mangle --output out/webrenderer-script.js",
     "minify:css": "cleancss -o out/style.css src/media/css/style.css",
-    "vscode:postinstall": "npm install knip@5.27.3 fta-cli@2.0.0 jscpd@4.0.4  --legacy-peer-deps"
+    "vscode:postinstall": "npm install knip@5.30.2 fta-cli@2.0.0 jscpd@4.0.4  --legacy-peer-deps"
   },
   "dependencies": {
     "marked": "^13.0.2",

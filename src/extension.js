@@ -135,11 +135,11 @@ async function activate(context) {
   );
   context.subscriptions.push(aiSearchPageCmd);
 
-  // AI Search Page
+  // AI Config Page
   const configCmd = vscode.commands.registerCommand(
     COMMANDS.CONFIGURATION,
-    async (uri) => {
-      initializeConfig(context, uri);
+    async (uri, sourceType) => {
+      initializeConfig(context, uri, sourceType);
     }
   );
   context.subscriptions.push(configCmd);

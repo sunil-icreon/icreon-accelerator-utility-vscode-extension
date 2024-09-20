@@ -347,10 +347,11 @@ function openNPMViewer(pkgName) {
   });
 }
 
-function renderPage(pageID) {
+function renderPage(pageID, sourceType) {
   vscode.postMessage({
     command: "renderPage",
-    pageID
+    pageID,
+    sourceType
   });
 }
 
@@ -428,12 +429,6 @@ function toggleChecklistItem(sectionId) {
     const checkedIcon = document.getElementById(sectionId + "_check_icon");
     const unCheckedIcon = document.getElementById(sectionId + "_uncheck_icon");
     const checkListOptions = document.getElementsByClassName("checklist-item");
-    for (i = 0; i < checkListOptions.length; i++) {
-      // checkListOptions[i].classList.remove("selected");
-      // const elementID = checkListOptions[i].dataset.sectionid;
-      // if(allSections[sectionIndex].id === elementID) {
-      //     checkListOptions[i].classList.add("selected");
-    }
 
     if (allSections[sectionIndex].selected) {
       showElement(sectionId + "_check_icon", true);
