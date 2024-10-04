@@ -2,8 +2,8 @@
   "name": "icreon-accelerator-utility",
   "displayName": "Icreon Accelerator: Utilities",
   "version": "1.0.0",
-  "description": "Extension help finding vulnerable/outdated npm packages, duplicate/unused code, analyze code for maintainability, provides UI to search/install packages along with displaying there vulnerabilities, provides UI to implement/integrate defined solutions and helps in writing unit test cases and performing ChatGPT searches.",
-  "main": "./out/main.js",
+  "description": "Extension help finding vulnerable/outdated npm packages, duplicate/unused code, analyze code for maintainability, provides UI to search/install packages along with displaying there vulnerabilities, provides UI to implement/integrate defined solutions and helps in writing unit test cases and performing AI searches.",
+  "main": "./out/extension.js",
   "icon": "images/icreon-icon.png",
   "publisher": "Icreon",
   "categories": [
@@ -12,7 +12,12 @@
   "engines": {
     "vscode": "^1.76.0"
   },
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact",
+    "onLanguage:javascriptreact"
+  ],
   "author": {
     "name": "Sunil Kumar",
     "email": "sunil.kumar@icreon.com"
@@ -37,17 +42,23 @@
       },
       {
         "command": "icreon-accelerator-utility.runCommandOnNPMPackageSearch",
-        "title": "View Package Details"
+        "title": "Icreon Accelerator: View Package Details"
+      },
+      {
+        "command": "icreon-accelerator-utility.addToSnippet",
+        "title": "Icreon Accelerator: Add Snippet",
+        "enablement": "resourceFilename != package-lock.json && resourceFilename != package.json && editorLangId != 'scss' && editorLangId != 'json'",
+        "when": "editorLangId == typescript || resourceUri.path =~ /.+(\\/|\\\\).+/"
       },
       {
         "command": "icreon-accelerator-utility.knowledgeCenter",
-        "title": "Icreon Accelerator: Knowledge Center",
+        "title": "Icreon Accelerator: Solutions Hub",
         "enablement": "resourceFilename != package-lock.json && resourceFilename != package.json && editorLangId != 'scss' && editorLangId != 'json'"
       },
       {
         "command": "icreon-accelerator-utility.npmSearch",
         "title": "Icreon Accelerator: NPM Viewer",
-        "enablement": "resourceFilename != package-lock.json && resourceFilename != package.json && editorLangId != 'scss' && editorLangId != 'json'"
+        "enablement": "resourceFilename != package-lock.json && editorLangId != 'scss' && editorLangId != 'json'"
       },
       {
         "command": "icreon-accelerator-utility.aiDashboard",
@@ -97,6 +108,10 @@
         {
           "command": "icreon-accelerator-utility.knowledgeCenter",
           "group": "icreon-accelerator-utility.editor@3"
+        },
+        {
+          "command": "icreon-accelerator-utility.addToSnippet",
+          "group": "icreon-accelerator-utility.editor@4"
         }
       ]
     },
@@ -134,24 +149,37 @@
             "code-cushman-002"
           ],
           "description": "GPT Model"
+        },
+        "icreon-accelerator-utility.GeminiModels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "gemini-1.5-pro",
+            "gemini-1.0-pro",
+            "gemini-1.5-flash"
+          ],
+          "description": "Gemini Model"
         }
       }
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm-run-all minify:css minify:script esbuild-base",
-    "esbuild-base": "esbuild ./src/extension.js --bundle --outfile=out/main.js --external:vscode  --format=cjs --platform=node & terser out/main.js --compress --mangle --output out/main.js",
-    "esbuild": "npm run -S esbuild-base -- --sourcemap",
-    "esbuild-watch": "npm run -S esbuild-base -- --sourcemap --watch",
     "build:package": "vsce package",
     "pretest": "npm run lint",
-    "minify:script": "terser src/media/script/webrenderer-script.js --compress --mangle --output out/webrenderer-script.js",
-    "minify:css": "cleancss -o out/style.css src/media/css/style.css",
+    "vscode:prepublish": "npm-run-all copy-fonts scss-to-css minify:css copy:web-renderer-script package",
+    "copy-fonts": "copyfiles -f src/scss/fonts/* out/css/fonts/",
+    "scss-to-css": "node-sass src/scss/style.scss out/css/style.css",
+    "minify:css": "cleancss -o out/css/style.css out/css/style.css",
+    "copy:web-renderer-script": "terser src/scripts/webrenderer-script.js --compress --mangle --output out/webrenderer-script.js",
+    "package": "node esbuild.js --production",
     "vscode:postinstall": "npm install knip@5.30.2 fta-cli@2.0.0 jscpd@4.0.4  --legacy-peer-deps"
   },
   "dependencies": {
-    "marked": "^13.0.2",
-    "openai": "^4.55.3",
+    "@google/generative-ai": "0.19.0",
+    "marked": "13.0.2",
+    "openai": "4.55.3",
     "semver": "7.6.2"
   },
   "repository": {},
@@ -160,14 +188,17 @@
     "@types/node": "latest",
     "@types/vscode": "1.76.0",
     "@vscode/vsce": "2.19.0",
+    "clean-css-cli": "^5.6.3",
+    "copyfiles": "2.4.1",
     "esbuild": "0.17.17",
     "fta-cli": "2.0.0",
     "glob": "8.1.0",
     "jscpd": "4.0.4",
-    "vscode": "^1.1.34",
+    "node-sass": "9.0.0",
     "npm-run-all": "^4.1.5",
-    "clean-css-cli": "^5.6.3",
-    "terser": "^5.31.6"
+    "terser": "^5.31.6",
+    "typescript": "^5.5.4",
+    "vscode": "^1.1.34"
   },
   "files": [
     "out",

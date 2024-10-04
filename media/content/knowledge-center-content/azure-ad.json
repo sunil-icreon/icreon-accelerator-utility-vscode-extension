@@ -1,45 +1,25 @@
 {
-  "id": "azure_id_config",
+  "id": 1,
   "title": "Integrate MSAL with Azure AD in a React app.",
   "subTitle": "",
-  "displaySteps": [
-    {
-      "id": 1,
-      "title": "MSAL React Library will be installed.",
-      "description": "\n        <div class='code-snippet'>\n        <pre>\n          <code>\nnpm install @azure/msal-react @azure/msal-browser\n          </code>\n        </pre>\n      </div>"
-    },
-    {
-      "id": 2,
-      "title": "MSAL configuration file will be created (azure-ad-config.ts).",
-      "description": "\n        <div class='code-snippet'>\n          <pre>\n            <code>\nconst msalConfig = {\n  auth: {\n    clientId: \"YOUR_CLIENT_ID\",\n    authority: \"https://login.microsoftonline.com/YOUR_TENANT_ID\",\n    redirectUri: \"http://localhost:3000\", // or your redirect URI\n  },\n  cache: {\n    cacheLocation: \"localStorage\", // or \"sessionStorage\"\n    storeAuthStateInCookie: false, // set to true for IE 11\n  },\n};\n\nexport { msalConfig };\n          </code>\n       </pre>\n     </div>"
-    },
-    {
-      "id": 3,
-      "title": "A service file will be created with MSAL AD implementaions (azure-ad-service.ts).",
-      "description": "\n        <div class='code-snippet mb-1'>\n          <pre>\n            <code>\nconst { msalConfig } from './azure-ad-config';\nconst pca = new PublicClientApplication(msalConfig);\n            </code>\n          </pre>\n        </div>\n\n        <div class='code-snippet mb-1'>\n          <pre>\n            <code>\nconst signIn = async (cb?: any) => {\n  try {\n    // Uncomment below line, to logout from all open tabs, on logout from any active tab\n    // localStorage.removeItem('logOutFromAllDevices');\n\n    await pca.initialize();\n    await pca.handleRedirectPromise();\n    await pca.loginRedirect({\n      scopes: ['openid', 'profile'] // Add the required scopes here\n    });\n    const authResponse = await pca.handleRedirectPromise();\n    pca.setActiveAccount(authResponse.account);\n    cb && cb(true);\n    // Handle successful sign-in, access tokens, etc.\n  } catch (error) {\n    cb && cb(false);\n    // Handle error.\n  }\n};\n          </code>\n        </pre>\n    </div>\n\n    <div class='code-snippet mb-1'>\n        <pre>\n          <code>\nconst signOut = async () => {\n  // Clear all data\n  localStorage.setItem('logOutFromAllDevices', '1');\n  await pca.initialize();\n  await pca.handleRedirectPromise();\n  await pca.logout();\n};\n            </code>\n        </pre>\n      </div>\n\n      <div class='code-snippet mb-1'>\n         <pre>\n          <code>\nconst getNewToken = async (dispatch: Dispatch<any>) => {\n  try {\n    const activeAccount = pca.getActiveAccount();\n\n    const tokenRequest = {\n      scopes: ['openid', 'profile'], // Specify the scope for your API\n      account: activeAccount // Get the active account\n    };\n\n    const resp = await pca.acquireTokenSilent(tokenRequest);\n\n    if (resp) {\n      localStorage.setItem('IdToken', resp.idToken);\n      localStorage.setItem('AccessToken', resp.accessToken);\n    }\n\n    return {\n      IdToken: resp.idToken,\n      AccessToken: resp.accessToken\n    };\n  } catch (error) {\n    signOut();\n  }\n};\n          </code>\n        </pre>\n      </div>\n\n      <div class='code-snippet mb-1'>\n        <pre>\n          <code>\nconst checkUserLogin = async (cb: any) => {\n  await pca.initialize();\n\n  // Check if there's an active account (user is authenticated)\n  const activeAccount = pca.getActiveAccount();\n\n  if (activeAccount) {\n    // The user is authenticated\n    localStorage.setItem('homeAccountId', activeAccount.homeAccountId);\n\n    cb && cb(true);\n    // You can use acquireTokenSilent or other methods with the active account here\n  } else {\n    // The user is not authenticated\n    const response = await pca.handleRedirectPromise();\n\n    if (response && response.account) {\n      // The user has successfully signed in\n\n      localStorage.setItem('homeAccountId', response.account.homeAccountId);\n      localStorage.setItem('IdToken', response.idToken);\n      localStorage.setItem('AccessToken', response.accessToken);\n      pca.setActiveAccount(response.account);\n\n      cb && cb(true);\n    } else {\n      // No user is authenticated; you may want to initiate the sign-in flow\n      cb && cb(false);\n\n      // DsignIn(cb);\n    }\n  }\n};\n          </code>\n        </pre>\n      </div>\n\n      <div class='code-snippet mb-1'>\n        <pre>\n          <code>\nconst getActiveAccount = () => {\n  return pca.getActiveAccount();\n};\n          </code>\n        </pre>\n      </div>\n\n      <div class='code-snippet mb-1'>\n        <pre>\n          <code>\nexport const AzureADService = {\n  pca,\n  checkUserLogin,\n  signIn,\n  signOut,\n  getNewToken,\n  getActiveAccount\n};\n          </code>\n        </pre>\n      </div>"
-    },
-    {
-      "id": 4,
-      "title": "Environment variables will be added in (.env) file.",
-      "description": "\n        <div class='b'>Below variables will be added in '.env' file.</b>\n        <div class='code-snippet'>\n        <pre>\n          <code>\nREACT_APP_AZURE_CLIENTID=YOUR_CLIENTID\nREACT_APP_AZURE_TENENTID=https://login.microsoftonline.com/YOUR_TENANTID\nREACT_APP_REDIRECTURI=https://localhost:3000\n          </code>\n        </pre>\n      </div>"
-    }
-  ],
-  "info": "\n    <h1>Integrate MSAL with Azure AD in a React app.</h1>\n    <p>Integrating Microsoft Authentication Library (MSAL) with Azure Active Directory (AD) in a React app involves several steps. </p>\n    <p><b>Below changes will be made.</b></p>\n    ",
+  "description": "\n    <h1>Integrate MSAL with Azure AD in a React app.</h1>\n    <p>Integrating Microsoft Authentication Library (MSAL) with Azure Active Directory (AD) in a React app involves several steps. </p>\n    <p><b>Below changes will be made.</b></p>\n    ",
   "steps": [
     {
       "id": 1,
+      "description": "npm install @azure/msal-react @azure/msal-browser",
       "status": 0,
-      "title": "Installing MSAL React Library.",
+      "title": "MSAL React Library will be installed.",
       "subtitle": "",
       "commandType": "INSTALL_PACKAGE",
-      "command": "npm install @azure/msal-browser@3.1.0 --legacy-peer-deps ",
+      "command": "npm install @azure/msal-browser@3.1.0 --legacy-peer-deps",
       "successMsg": "MSAL React Library installed successfully.",
       "errorMsg": "MSAL React Library installation failed."
     },
     {
       "id": 2,
       "status": 0,
-      "title": "Creating MSAL configuration file (azure-ad-config.ts).",
+      "title": "MSAL configuration file will be created (azure-ad-config.ts).",
+      "description": "\n        <div class='code-snippet'>\n          <pre>\n            <code>\nconst msalConfig = {\n  auth: {\n    clientId: \"YOUR_CLIENT_ID\",\n    authority: \"https://login.microsoftonline.com/YOUR_TENANT_ID\",\n    redirectUri: \"http://localhost:3000\", // or your redirect URI\n  },\n  cache: {\n    cacheLocation: \"localStorage\", // or \"sessionStorage\"\n    storeAuthStateInCookie: false, // set to true for IE 11\n  },\n};\n\nexport { msalConfig };\n          </code>\n       </pre>\n     </div>",
       "subtitle": "",
       "commandType": "CREATE_FILE",
       "successMsg": "MSAL configuration file (azure-ad-config.ts) created/updated successfully.",
@@ -50,18 +30,20 @@
     {
       "id": 3,
       "status": 0,
-      "title": "Creating service file with MSAL AD implementaions (azure-ad-service.ts).",
+      "title": "A service file will be created with MSAL AD implementaions (azure-ad-service.ts).",
+      "description": "",
       "subtitle": "",
       "commandType": "CREATE_FILE",
       "successMsg": "MSAL service file (azure-ad-service.ts) created/updated successfully.",
       "errorMsg": "Error writing MSAL service file (azure-ad-service.ts).",
       "fileName": "msal-azure-ad/azure-ad-service.ts",
-      "fileContent": "\nconst { msalConfig } from './azure-ad-config';\nconst pca = new PublicClientApplication(msalConfig);\n  \nconst signIn = async (cb?: any) => {\n  try {\n    // Uncomment below line, to logout from all open tabs, on logout from any active tab\n    // localStorage.removeItem('logOutFromAllDevices');\n\n    await pca.initialize();\n    await pca.handleRedirectPromise();\n    await pca.loginRedirect({\n      scopes: ['openid', 'profile'] // Add the required scopes here\n    });\n    const authResponse = await pca.handleRedirectPromise();\n    pca.setActiveAccount(authResponse.account);\n    cb && cb(true);\n    // Handle successful sign-in, access tokens, etc.\n  } catch (error) {\n    cb && cb(false);\n    // Handle error.\n  }\n};\n  \nconst signOut = async () => {\n  // Clear all data\n  localStorage.setItem('logOutFromAllDevices', '1');\n  await pca.initialize();\n  await pca.handleRedirectPromise();\n  await pca.logout();\n};\n  \nconst getNewToken = async (dispatch: Dispatch) => {\n  try {\n    const activeAccount = pca.getActiveAccount();\n\n    const tokenRequest = {\n      scopes: ['openid', 'profile'], // Specify the scope for your API\n      account: activeAccount // Get the active account\n    };\n\n    const resp = await pca.acquireTokenSilent(tokenRequest);\n\n    if (resp) {\n      localStorage.setItem('IdToken', resp.idToken);\n      localStorage.setItem('AccessToken', resp.accessToken);\n    }\n\n    return {\n      IdToken: resp.idToken,\n      AccessToken: resp.accessToken\n    };\n  } catch (error) {\n    signOut();\n  }\n};\n  \nconst checkUserLogin = async (cb: any) => {\n  await pca.initialize();\n\n  // Check if there's an active account (user is authenticated)\n  const activeAccount = pca.getActiveAccount();\n\n  if (activeAccount) {\n    // The user is authenticated\n    localStorage.setItem('homeAccountId', activeAccount.homeAccountId);\n\n    cb && cb(true);\n    // You can use acquireTokenSilent or other methods with the active account here\n  } else {\n    // The user is not authenticated\n    const response = await pca.handleRedirectPromise();\n\n    if (response && response.account) {\n      // The user has successfully signed in\n\n      localStorage.setItem('homeAccountId', response.account.homeAccountId);\n      localStorage.setItem('IdToken', response.idToken);\n      localStorage.setItem('AccessToken', response.accessToken);\n      pca.setActiveAccount(response.account);\n\n      cb && cb(true);\n    } else {\n      // No user is authenticated; you may want to initiate the sign-in flow\n      cb && cb(false);\n\n      // DsignIn(cb);\n    }\n  }\n};\n  \nconst getActiveAccount = () => {\n  return pca.getActiveAccount();\n};\n  \nexport const AzureADService = {\n    pca,\n    checkUserLogin,\n    signIn,\n    signOut,\n    getNewToken,\n    getActiveAccount\n};"
+      "fileContent": "const { msalConfig } from './azure-ad-config';\nconst pca = new PublicClientApplication(msalConfig);\n  \nconst signIn = async (cb?: any) => {\n  try {\n    // Uncomment below line, to logout from all open tabs, on logout from any active tab\n    // localStorage.removeItem('logOutFromAllDevices');\n\n    await pca.initialize();\n    await pca.handleRedirectPromise();\n    await pca.loginRedirect({\n      scopes: ['openid', 'profile'] // Add the required scopes here\n    });\n    const authResponse = await pca.handleRedirectPromise();\n    pca.setActiveAccount(authResponse.account);\n    cb && cb(true);\n    // Handle successful sign-in, access tokens, etc.\n  } catch (error) {\n    cb && cb(false);\n    // Handle error.\n  }\n};\n  \nconst signOut = async () => {\n  // Clear all data\n  localStorage.setItem('logOutFromAllDevices', '1');\n  await pca.initialize();\n  await pca.handleRedirectPromise();\n  await pca.logout();\n};\n  \nconst getNewToken = async (dispatch: Dispatch) => {\n  try {\n    const activeAccount = pca.getActiveAccount();\n\n    const tokenRequest = {\n      scopes: ['openid', 'profile'], // Specify the scope for your API\n      account: activeAccount // Get the active account\n    };\n\n    const resp = await pca.acquireTokenSilent(tokenRequest);\n\n    if (resp) {\n      localStorage.setItem('IdToken', resp.idToken);\n      localStorage.setItem('AccessToken', resp.accessToken);\n    }\n\n    return {\n      IdToken: resp.idToken,\n      AccessToken: resp.accessToken\n    };\n  } catch (error) {\n    signOut();\n  }\n};\n  \nconst checkUserLogin = async (cb: any) => {\n  await pca.initialize();\n\n  // Check if there's an active account (user is authenticated)\n  const activeAccount = pca.getActiveAccount();\n\n  if (activeAccount) {\n    // The user is authenticated\n    localStorage.setItem('homeAccountId', activeAccount.homeAccountId);\n\n    cb && cb(true);\n    // You can use acquireTokenSilent or other methods with the active account here\n  } else {\n    // The user is not authenticated\n    const response = await pca.handleRedirectPromise();\n\n    if (response && response.account) {\n      // The user has successfully signed in\n\n      localStorage.setItem('homeAccountId', response.account.homeAccountId);\n      localStorage.setItem('IdToken', response.idToken);\n      localStorage.setItem('AccessToken', response.accessToken);\n      pca.setActiveAccount(response.account);\n\n      cb && cb(true);\n    } else {\n      // No user is authenticated; you may want to initiate the sign-in flow\n      cb && cb(false);\n\n      // DsignIn(cb);\n    }\n  }\n};\n  \nconst getActiveAccount = () => {\n  return pca.getActiveAccount();\n};\n  \nexport const AzureADService = {\n    pca,\n    checkUserLogin,\n    signIn,\n    signOut,\n    getNewToken,\n    getActiveAccount\n};"
     },
     {
       "id": 4,
       "status": 0,
-      "title": "Add environment variables in .env file.",
+      "title": "Environment variables will be added in (.env) file.",
+      "description": "",
       "subtitle": "",
       "commandType": "APPEND_IN_FILE",
       "successMsg": "Environment variables were added in .env file successfully.",
