@@ -9,7 +9,7 @@ import {
   runNPMCommand
 } from "../util";
 
-const { PROJECT_STAT } = require("../constants");
+import { PROJECT_STAT } from "../constants";
 
 const renderLintCount = (
   webRenderer: IWebRenderer,
@@ -124,6 +124,15 @@ const renderLintCount = (
   });
 };
 
+const showLintError = (webRenderer: IWebRenderer, msg: string) => {
+  webRenderer.sendMessageToUI("esLintContent", {
+    htmlContent: `<div class='text-danger'>${msg}</div>`,
+    Count: "",
+    showSummary: msg == "-1",
+    hideSection: msg == "-1"
+  });
+};
+
 const renderESLintResult = (
   webRenderer: IWebRenderer,
   searchPattern: string
@@ -141,42 +150,41 @@ const renderESLintResult = (
   try {
     const eslIntCommand = `npx eslint ${searchPattern} -f json `;
     runNPMCommand(webRenderer, eslIntCommand, (success, resp) => {
-      if (success && !resp.stderr) {
-        const results = JSON.parse(resp.stdout || "[]");
-        if (results && results.length > 0) {
-          results.map((result: IRecord) => {
-            if ((result.messages || []).length > 0) {
-              lintIssues = [
-                ...lintIssues,
-                { ...result, fileName: result.filePath }
-              ];
-              total.errors += Number(result.errorCount);
-              total.warnings += Number(result.warningCount);
-              total.fatalErrorCount += Number(result.fatalErrorCount);
-              total.fixableErrorCount += Number(result.fixableErrorCount);
-              total.fixableWarningCount += Number(result.fixableWarningCount);
-            }
-          });
-          renderLintCount(webRenderer, total, "", lintIssues);
+      try {
+        if (success && !resp.stderr) {
+          const results = JSON.parse(resp.stdout || "[]");
+          if (results && results.length > 0) {
+            results.map((result: IRecord) => {
+              if ((result.messages || []).length > 0) {
+                lintIssues = [
+                  ...lintIssues,
+                  { ...result, fileName: result.filePath }
+                ];
+                total.errors += Number(result.errorCount);
+                total.warnings += Number(result.warningCount);
+                total.fatalErrorCount += Number(result.fatalErrorCount);
+                total.fixableErrorCount += Number(result.fixableErrorCount);
+                total.fixableWarningCount += Number(result.fixableWarningCount);
+              }
+            });
+            renderLintCount(webRenderer, total, "", lintIssues);
+          }
+
+          return;
+        }
+      } catch (e) {
+        if (JSON.stringify(resp).indexOf("ERR_CHILD_PROCESS_STDIO_MAXBUFFER")) {
+          showLintError(webRenderer, "ERR_CHILD_PROCESS_STDIO_MAXBUFFER");
+          return;
         }
 
-        return;
+        showLintError(webRenderer, JSON.stringify(e));
       }
 
-      webRenderer.sendMessageToUI("esLintContent", {
-        htmlContent: "",
-        Count: "",
-        showSummary: false,
-        hideSection: true
-      });
+      showLintError(webRenderer, "-1");
     });
   } catch (e) {
-    webRenderer.sendMessageToUI("esLintContent", {
-      htmlContent: "",
-      Count: "",
-      showSummary: false,
-      hideSection: true
-    });
+    showLintError(webRenderer, JSON.stringify(e));
   }
 };
 

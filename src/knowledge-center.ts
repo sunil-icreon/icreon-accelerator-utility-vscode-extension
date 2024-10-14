@@ -38,6 +38,7 @@ import {
   STEP_COMMAND_OPTIONS
 } from "./knowledge-center-utilities/topics";
 
+const SHOW_ADMIN_FEATURES = false;
 let KNOWLEDGE_TOPICS: Array<ITopicItemType> = [];
 
 const renderTopicTable = (webRenderer: IWebRenderer) => {
@@ -45,7 +46,11 @@ const renderTopicTable = (webRenderer: IWebRenderer) => {
     <tr>
       <th style='width:50px'>#</th>
       <th class='text-align-left'>Solution</th>
-      <th class='hide-on-browser' style='width:50px'>Edit</th>
+      ${
+        SHOW_ADMIN_FEATURES
+          ? `<th class='hide-on-browser' style='width:50px'>Edit</th>`
+          : ""
+      } 
       <th class='hide-on-browser' style='width:50px'>Start</th>
     </tr>`;
 
@@ -62,7 +67,9 @@ const renderTopicTable = (webRenderer: IWebRenderer) => {
           </a>
         </td>
 
-        <td class='hide-on-browser webkit-text-align'>
+        ${
+          SHOW_ADMIN_FEATURES
+            ? `<td class='hide-on-browser webkit-text-align'>
           ${splitButton(
             pencilIcon(16),
             `Edit`,
@@ -70,7 +77,9 @@ const renderTopicTable = (webRenderer: IWebRenderer) => {
             "",
             `sm`
           )}
-        </td>
+        </td>`
+            : ""
+        }
 
         <td class='hide-on-browser webkit-text-align'>
           ${splitButton(
@@ -307,7 +316,9 @@ const getWebviewContent = () => {
               <span id='topic_page_title'>Solutions Hub</span>
             </h3>
 
-            <div class='float-right'>
+            ${
+              SHOW_ADMIN_FEATURES
+                ? `<div class='float-right'>
               ${splitButton(
                 addIcon(18),
                 `Add Solution`,
@@ -336,7 +347,9 @@ const getWebviewContent = () => {
                 "topic_add_save",
                 `style="display:none"`
               )}
-            </div>
+            </div>`
+                : ""
+            }
       </div>
 
       <div class='flex-group'>

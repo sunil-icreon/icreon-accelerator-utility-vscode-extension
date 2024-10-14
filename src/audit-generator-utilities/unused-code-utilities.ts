@@ -1,4 +1,3 @@
-import vscode from "vscode";
 import { IRecord, IWebRenderer } from "../common.types";
 import {
   PILLS,
@@ -9,10 +8,14 @@ import {
   runNPMCommandWithoutPlatform
 } from "../util";
 
-const { PROJECT_STAT } = require("../constants");
-const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+import { PROJECT_STAT } from "../constants";
 
-const renderSections = (label: string, id: string, list: Array<IRecord>) => {
+const renderSections = (
+  label: string,
+  id: string,
+  list: Array<IRecord>,
+  parentPath: string
+) => {
   if (!list || list.length === 0) {
     return "";
   }
@@ -27,7 +30,7 @@ const renderSections = (label: string, id: string, list: Array<IRecord>) => {
 
   list.map((fl, index) => {
     if (fl) {
-      const flPath = `${workspaceFolder}\\${fl.flName}`.replace(/\\/g, "\\\\");
+      const flPath = `${parentPath}\\${fl.flName}`.replace(/\\/g, "\\\\");
       htlmStr += `
       <tr>
         <td class='text-center'>${index + 1}</td>
@@ -131,8 +134,7 @@ const getIssues = (issues: Array<IRecord>) => {
   };
 };
 
-const renderUnusedFiles = (files: Array<IRecord>) => {
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+const renderUnusedFiles = (files: Array<IRecord>, parentPath: string) => {
   let htlmStr = `
   <table class='table table-striped table-bordered table-sm simple-table'>
     <tr>
@@ -141,7 +143,7 @@ const renderUnusedFiles = (files: Array<IRecord>) => {
     </tr>`;
 
   files.map((fl, index) => {
-    const flPath = `${workspaceFolder}\\${fl}`.replace(/\\/g, "\\\\");
+    const flPath = `${parentPath}\\${fl}`.replace(/\\/g, "\\\\");
     htlmStr += `
     <tr>
       <td class='text-center'>${index + 1}</td>
@@ -205,12 +207,33 @@ const renderUnusedCodes = (webRenderer: IWebRenderer, data: IRecord) => {
 
   // NODE_API.sendProjectStat(webRenderer);
 
-  let content = renderUnusedFiles(files);
+  let content = ``;
   content += `<div class='accordion'>`;
-  content += renderSections("Unused Exports", "Exports", exportList);
-  content += renderSections("Unused Enums", "Enums", enumList);
-  content += renderSections("Unused Types", "Types", typeList);
-  content += renderSections("Duplicates", "Duplicates", duplicateList);
+  content += renderUnusedFiles(files, webRenderer.parentPath);
+  content += renderSections(
+    "Unused Exports",
+    "Exports",
+    exportList,
+    webRenderer.parentPath
+  );
+  content += renderSections(
+    "Unused Enums",
+    "Enums",
+    enumList,
+    webRenderer.parentPath
+  );
+  content += renderSections(
+    "Unused Types",
+    "Types",
+    typeList,
+    webRenderer.parentPath
+  );
+  content += renderSections(
+    "Duplicates",
+    "Duplicates",
+    duplicateList,
+    webRenderer.parentPath
+  );
   content += `</div>`;
 
   webRenderer.sendMessageToUI("unusedCodeContent", {

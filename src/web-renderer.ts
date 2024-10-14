@@ -1,9 +1,7 @@
 // @ts-nocheck
-const { writeFile } = require("fs");
-import path from "path";
-import vscode from "vscode";
-const { posix } = require("path");
-const { window, ViewColumn, workspace, Uri } = require("vscode");
+import { writeFile } from "fs";
+import path, { posix } from "path";
+import vscode, { Uri, ViewColumn, window, workspace } from "vscode";
 
 const printScript = `function openTab(evt, tabName) {
   let i, tabcontent, tablinks;
@@ -113,6 +111,7 @@ import {
   installExtension,
   logErrorMsg,
   logMsg,
+  randomTxt,
   runOtherExtensionCommand,
   saveVulDataInExtensionState
 } from "./util";
@@ -163,6 +162,7 @@ import {
   terminateUnitTestRun
 } from "./ai-dashboard";
 import { IAAnalyticsType } from "./analytics";
+import { findSecrets } from "./audit-generator-utilities/secrets-utilities";
 import { IRecord, IWebRenderer } from "./common.types";
 import { saveConfigurations } from "./config-page";
 import { getCopyrightContent } from "./copy-right";
@@ -382,6 +382,11 @@ export class WebRenderer {
           case SECTIONS_IDS.UNUSED_CODES:
             getUnusedCodes(this);
             this.sendAnalytics("COMMAND", "AUDITING", "Unused Code", "");
+            break;
+
+          case SECTIONS_IDS.SECRETS:
+            findSecrets(this);
+            this.sendAnalytics("COMMAND", "AUDITING", "Finding Secrets", "");
             break;
         }
       });
@@ -648,10 +653,6 @@ export class WebRenderer {
             );
             break;
 
-          case "showEventLog":
-            showEventLog(this);
-            break;
-
           case "saveSnippet":
             saveAutoCompleteSnippet(this, message.data);
             this.sendAnalytics(
@@ -687,7 +688,7 @@ export class WebRenderer {
     category: string,
     action: string,
     label: string,
-    value: string
+    value: string | IRecord
   ) => {
     this.analytics.sendEvent(category, action, label, value);
   };
@@ -749,7 +750,6 @@ export class WebRenderer {
     const extVersion: string = await getExtensionVersion(this.context);
     return `
       <div id='app_common_info' class='info-pages' style='display:none'></div>
-      <div id='analytics_event_log' class='info-pages' style='display:none'></div>
 
       <div id='copyrightContent' class='copyright-body' style='display:none'>
         ${getCopyrightContent()}
@@ -761,7 +761,6 @@ export class WebRenderer {
         </div>
 
         <button class='footer-link' onclick='toggleCopyRight(true)'>Copyright Notice</button> 
-        <button class='footer-link' onclick='showEventLog(true)'>Analytics Log</button> 
       </div>
 
       <div>
@@ -800,6 +799,7 @@ export class WebRenderer {
       this.context.asAbsolutePath("images/icreon-fav.png")
     ).with({ scheme: "vscode-resource" });
 
+    const nonce = `${this.panelId}-${randomTxt()}}`;
     let htmlStr = `<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -811,8 +811,8 @@ export class WebRenderer {
           ${this.applicationName ? ` - ${this.applicationName}` : ""}
         </title>
 
-        <link href="${styleSrc}" rel="stylesheet">
-        <script src="${scriptSrc}"></script>
+        <link href="${styleSrc}" nonce="web-style-${nonce}" rel="stylesheet">
+        <script src="${scriptSrc}" nonce="web-scr-${nonce}"></script>
     </head>
 
     <body>
@@ -1006,7 +1006,9 @@ const createReportFile = async (webRenderedRef, content, reportType) => {
   try {
     webRenderedRef.sendMessageToUI("downloadingStart");
     content += `<style>.header-link-actions { display: none;} body, table { font-size:12px!important;}
-    .hide-on-browser { display:none}
+    .hide-on-browser { 
+      pointer-events:none!important; opacity:0.5!important; background: #93959f!important;border: 1px solid #bdbdbd!important;cursor: not-allowed !important;
+    }
     .remove-link-on-browser { text-decoration:none; color:black; pointer-events:none; cursor:none; }
     .text-with-icon { justify-content: center!important; }
     .show-on-browser{display: block!important;}
@@ -1091,8 +1093,4 @@ export const renderUserInfo = (webrenderer: IWebRenderer) => {
   webrenderer.sendMessageToUI("leftSectionUserInfo", {
     htmlContent: htmlStr
   });
-};
-
-export const showEventLog = (webRenderer: IWebRenderer) => {
-  webRenderer.analytics?.showEventLog(webRenderer);
 };

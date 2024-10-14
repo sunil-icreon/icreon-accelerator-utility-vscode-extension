@@ -88,7 +88,7 @@ const renderPackageTable = (
                     changedCount > 0
                       ? PILLS.SEVERITY.MODERATE(
                           changedCount,
-                          "Updated",
+                          "Update Required",
                           false,
                           `Packages with difference in 'configured' and 'installed' versions.`
                         )

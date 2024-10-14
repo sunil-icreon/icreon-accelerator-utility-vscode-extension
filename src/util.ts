@@ -10,22 +10,20 @@ import {
   IWebRenderer
 } from "./common.types";
 
-import path from "path";
-import vscode from "vscode";
+import http from "http";
+import https from "https";
+import path, { dirname } from "path";
+import semver from "semver";
+import vscode, { commands, TextDocument, window, workspace } from "vscode";
 import { IAAnalytics } from "./analytics";
 import { closeIcon, icreonIcon } from "./icons";
-const https = require("https");
-const http = require("http");
-const { dirname } = require("path");
-const semver = require("semver");
-const { window, workspace, commands } = require("vscode");
 
-const {
-  SEVERITY_TYPE,
-  LOCAL_STORAGE,
+import {
+  extensionPrefix,
   IGNORE_PATHS,
-  extensionPrefix
-} = require("./constants");
+  LOCAL_STORAGE,
+  SEVERITY_TYPE
+} from "./constants";
 
 export const confirmMsg = (msg: any, cb: (flag: boolean) => void) => {
   window
@@ -483,7 +481,11 @@ export const getSearchingHTML = (text: string) => {
   </div>`;
 };
 
-export const getPackageJSON = async (file: IRecord) => {
+export const getPackageJSON = async (file: TextDocument | null) => {
+  if (!file) {
+    return null;
+  }
+
   const content = await getFileContent(file);
   if (!content) {
     return null;
@@ -698,7 +700,8 @@ export const runNPMCommand = (
   try {
     exec(command + (process.platform !== "win32" ? "/" : "") + workingDir, {
       windowsHide: true,
-      cwd: workingDir
+      cwd: workingDir,
+      maxBuffer: 2048 * 2048
     })
       .then((result: IRecord) => {
         cb &&
@@ -1157,10 +1160,10 @@ export const initWebRenderer = async (
   // await context.globalState.update(LOCAL_STORAGE.VULNERABILITIES, undefined);
 
   webRenderer.title = title;
-  if (webRenderer.initialized) {
-    webRenderer.pckName = pckName;
-    return webRenderer;
-  }
+  // if (webRenderer.initialized) {
+  //   webRenderer.pckName = pckName;
+  //   return webRenderer;
+  // }
 
   webRenderer.initialized = true;
   const parentPath = uri ? path.dirname(uri.fsPath) : "";
@@ -1556,87 +1559,80 @@ export const showStatusContent = async (context: IContext) => {
   }
 };
 
-export const checkVersionUpdate = async (webRenderer: IWebRenderer) => {
-  let newUpdates:
-    | {
-        version: string;
-        features: string;
-        downloadLink: string;
-        installationGuide: string;
-        updateDate: string;
-      }
-    | any = null;
+interface INewUpdateType {
+  version: string;
+  features: string;
+  downloadLink: string;
+  installationGuide: string;
+  updateDate: string;
+}
 
+export const checkVersionUpdate = (webRenderer: IWebRenderer) => {
   try {
-    newUpdates = await httpAPI(
+    httpAPI(
       "https://raw.githubusercontent.com/sunil-icreon/ia-extension-helper/refs/heads/main/version.json",
       "GET"
-    );
-  } catch (e) {
-    newUpdates = null;
-  }
+    ).then((resp: any) => {
+      const newUpdates: INewUpdateType = resp;
+      if (newUpdates) {
+        const isNewerVersionAvailable =
+          webRenderer.extensionVersion != newUpdates.version;
 
-  if (!newUpdates) {
-    return;
-  }
+        if (!isNewerVersionAvailable) {
+          return;
+        }
 
-  const isNewerVersionAvailable =
-    webRenderer.extensionVersion != newUpdates.version;
-
-  if (!isNewerVersionAvailable) {
-    return;
-  }
-
-  let htmlStr = "";
-  htmlStr += `
-  <div class='dep-info-box info-pages'>
-    <button class='close-link' 
-            onclick='closeCommonMessage()'
-            data-tooltip="Close"
-            >
-      ${closeIcon(24)}
-    </button> 
-
-    <div class='icreon-icon'>${icreonIcon("#212529")}</div>
-    <h1 class='grey-header mt-0 text-danger'>New Version Available</h1> 
-
-    ${hrDivider}
-    
-    <div class='dep-info'>
-      <div class='section'>
-          <h2 class='grey-header mb-0'>Version</h2>
-          <p>${newUpdates.version}</p>
-
-          <h2 class='grey-header mb-0'>Features</h2>
-          <p>${newUpdates.features}</p>
-
-          <h2 class='grey-header mb-0'>Download</h2>
-          
-          <a
-            href='${newUpdates.downloadLink}' 
-            target='_blank'
-            class='internal-link mt-1'
-            downlod>
-              New Version
-          </a>
-
-          <h2 class='grey-header mb-0'>Installation Guide</h2>
-          
-          <a
-            href='${newUpdates.installationGuide}' 
-            target='_blank'
-            class='internal-link mt-1'
-            downlod>
-              Installation Guide
-          </a>
-
-          
-        </div>
+        let htmlStr = "";
+        htmlStr += `
+         <div class='dep-info-box info-pages'>
+            <button class='close-link' 
+              onclick='closeCommonMessage()'
+              data-tooltip="Close"
+              >
+              ${closeIcon(24)}
+            </button> 
+  
+            <div class='icreon-icon'>${icreonIcon("#212529")}</div>
+            <h1 class='grey-header mt-0 text-danger'>New Version Available</h1> 
+  
+            ${hrDivider}
+        
+          <div class='dep-info'>
+            <div class='section'>
+              <h2 class='grey-header mb-0'>Version</h2>
+              <p>${newUpdates.version}</p>
+  
+              <h2 class='grey-header mb-0'>Features</h2>
+              <p>${newUpdates.features}</p>
+  
+              <h2 class='grey-header mb-0'>Download</h2>
+            
+              <a
+                href='${newUpdates.downloadLink}' 
+                target='_blank'
+                class='internal-link mt-1'
+                downlod>
+                New Version
+              </a>
+  
+            <h2 class='grey-header mb-0'>Installation Guide</h2>
+            
+            <a
+              href='${newUpdates.installationGuide}' 
+              target='_blank'
+              class='internal-link mt-1'
+              downlod>
+                Installation Guide
+            </a>
+          </div>
+      </div>
     </div>
-  </div>
-  `;
+    `;
 
-  webRenderer.sendMessageToUI("newVersionContent", {
-    htmlContent: htmlStr
-  });
+        webRenderer.sendMessageToUI("newVersionContent", {
+          htmlContent: htmlStr
+        });
+      }
+    });
+  } catch (e) {}
 };

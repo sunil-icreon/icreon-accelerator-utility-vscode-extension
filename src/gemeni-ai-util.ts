@@ -43,21 +43,6 @@ const getGeminiAIClient = async (webRenderer: IWebRenderer) => {
   }
 };
 
-const TEMP_STREAM = [
-  "The",
-  " Apache License, Version 2.0 is a popular, permissive open-source",
-  " license known for its flexibility.  While it grants wide permissions to use, modify",
-  ", and distribute software, it does have some key restrictions:\n\n**1. Attribution (NOTICE file)**\n\n* You **must** retain all copyright, patent",
-  ", trademark, and attribution notices included in the original software.\n* You **must** include a copy of the Apache License 2.0 itself.\n",
-  "* If a NOTICE file is provided with the original work, you **must** reproduce this file within your distribution.\n\n**2. Modification Notice (if applicable)**\n\n* If you modify the software, you **must** indicate the changes",
-  " you made. You don't have to specify how, just that modifications were made.\n\n**3. Trademark Use**\n\n* The license **does not grant you the right to use any trademarks** of the original software's creators",
-  " or contributors. This includes the project name itself.\n\n**4. Patent Claims (implicit grant)**\n\n* By distributing the software, you grant a patent license to anyone who receives the software. This license covers any patents you may hold that are infringed by the software alone or in combination with other works. \n\n",
-  '**5. No Warranty**\n\n* The software is provided "AS IS" **without any warranty**, express or implied. This includes warranties of merchantability, fitness for a particular purpose, and non-infringement. \n\n**6. No Liability**\n\n* The original authors and contributors are **not liable',
-  " for any damages** arising from the use of the software. This includes direct, indirect, incidental, special, exemplary, or consequential damages.\n\n**7. Contribution Licensing**\n\n* While not strictly a restriction, it's essential to understand that contributions you make to an Apache 2.0 project are automatically licensed",
-  " under the same terms.\n\n**Key Points to Remember**\n\n* **Permissive but not unlimited:** The Apache License 2.0 allows for significant freedom but has rules you must follow.\n* **Read the license carefully:** This summary is not a substitute for reading the full text of the Apache License 2",
-  ".0. \n* **Legal advice:** If you have specific legal questions, consult with an attorney.\n\nLet me know if you have any other questions. \n"
-];
-
 export const callGeminiAI = async (
   webRenderer: IWebRenderer,
   prompt: string,
@@ -69,24 +54,6 @@ export const callGeminiAI = async (
     compResp?: any
   ) => void
 ) => {
-  setTimeout(async () => {
-    let resp: Array<any> = [];
-
-    for await (const chunk of TEMP_STREAM) {
-      await new Promise((resolve) =>
-        setTimeout(() => {
-          resp = [...resp, chunk];
-          cb && cb(resp, null, false);
-          resolve(false);
-        }, 2)
-      );
-    }
-
-    cb && cb(resp, null, true);
-  }, 1000);
-
-  return;
-
   const client = await getGeminiAIClient(webRenderer);
   if (!client) {
     cb &&

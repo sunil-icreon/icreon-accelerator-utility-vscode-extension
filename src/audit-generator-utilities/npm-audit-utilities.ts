@@ -290,7 +290,7 @@ const renderVulnerabilitiesSummary = (
         `Auto Fix Vulnerabilities`,
         `onclick="autoFixVulnerabilities('${webRenderer.parentPath}')"`,
         "",
-        "disable-on-browser grey sm"
+        "hide-on-browser grey sm"
       )}
   </div>
 
@@ -769,7 +769,7 @@ export const renderNPMAuditResponse = async (
       filterBySeverity(vulnerabilityList, VUL_SEVERITY.MODERATE).length
     )}
 
-    ${PILLS.SEVERITY.MODERATE(
+    ${PILLS.SEVERITY.LOW(
       filterBySeverity(vulnerabilityList, VUL_SEVERITY.LOW).length
     )}
     `

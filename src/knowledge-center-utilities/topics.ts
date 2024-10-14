@@ -1,9 +1,7 @@
 // @ts-nocheck
 
-const { getFileDataFromExtension } = require("../util");
-
+import { getFileDataFromExtension } from "../util";
 export const STEP_COMMAND_FOR_FILE = ["CREATE_FILE", "APPEND_IN_FILE"];
-
 export const KNOWLEDGE_TOPICS_IDS = {
   ACTIVATE_KENDO_LICENSE: "activate_kendo_license",
   ENABLE_HUSKY_COMMIT: "enable_husky_commit"

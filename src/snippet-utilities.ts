@@ -83,6 +83,10 @@ export const renderSnippetAddPage = async (webRenderer: IWebRenderer) => {
     selectedText = editor.document.getText(selection);
   }
 
+  if (!selectedText) {
+    logMsg(`Invalid/No selection was found.`, true);
+  }
+
   const content = createHTMLReport(selectedText);
   webRenderer.content = content;
   webRenderer.renderContent(content, REPORT_TITLE, SOURCE_TYPE.PROJECT);

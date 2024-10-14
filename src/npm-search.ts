@@ -76,7 +76,7 @@ const vulnerabilityColumn = (
   vulObj?: IRecord
 ) => {
   let vulScanHTML = `<button type='button'
-                               class='simple-btn hide-on-browser-1 float-left'
+                               class='simple-btn hide-on-browser float-left'
                                onclick="checkPckVulSingle('${pkgName}', '${version}')" >Scan
                       </button>`;
 
@@ -85,7 +85,7 @@ const vulnerabilityColumn = (
   }
 
   let vulBtnHtml = `
-    <div class='text-sm grey-header'>
+    <div class='text-sm text-light-grey grey-header'>
       ${`Scanned: ${formatDate(vulObj.ts)}`}
     </div>`;
 
@@ -150,7 +150,7 @@ const versionTableTR = (
               `Prod`,
               `onclick="installPackage('${pkg.name}','${pkg.version}','prod','${parentPath}')"`,
               "",
-              "disable-on-browser grey sm"
+              "hide-on-browser grey sm"
             )}
           </div>
 
@@ -160,7 +160,7 @@ const versionTableTR = (
               `Dev`,
               `onclick="installPackage('${pkg.name}','${pkg.version}','dev','${parentPath}')"`,
               "",
-              "disable-on-browser grey sm"
+              "hide-on-browser grey sm"
             )}
         </div>
       </div>
@@ -385,7 +385,11 @@ export const renderNPMSearch = async (webRenderer: IWebRenderer) => {
   await initializeAppInfo(webRenderer);
   let content = getWebviewContent();
   webRenderer.content = content;
-  webRenderer.renderContent(content, PAGE_TITLE.TITLE, SOURCE_TYPE.PROJECT);
+  await webRenderer.renderContent(
+    content,
+    PAGE_TITLE.TITLE,
+    SOURCE_TYPE.PROJECT
+  );
   renderRecentViewed(webRenderer);
 };
 

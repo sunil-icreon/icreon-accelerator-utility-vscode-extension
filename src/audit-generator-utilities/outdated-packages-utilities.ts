@@ -203,7 +203,7 @@ const renderOutdatedPackages = async (
                   `Update all to &nbsp;<b>latest</b>`,
                   `onclick="updateAllPackages('latest','${webRenderer.parentPath}')"`,
                   "",
-                  "disable-on-browser grey sm"
+                  "hide-on-browser grey sm"
                 )}
           
                 ${splitButton(
@@ -211,7 +211,7 @@ const renderOutdatedPackages = async (
                   `Update all to&nbsp;<b>Wanted</b>`,
                   `onclick="updateAllPackages('wanted','${webRenderer.parentPath}')"`,
                   "",
-                  "disable-on-browser grey sm"
+                  "hide-on-browser grey sm"
                 )}
         <br/>
     </div>
@@ -259,7 +259,7 @@ const renderOutdatedPackages = async (
                                         '${itm.wanted}',
                                         '${webRenderer.parentPath}')"`,
             "",
-            "disable-on-browser grey sm"
+            "hide-on-browser grey sm"
           )}
       </td>
 
@@ -271,7 +271,7 @@ const renderOutdatedPackages = async (
                                       '${itm.latest}',
                                       '${webRenderer.parentPath}')"`,
             "",
-            "disable-on-browser grey sm"
+            "hide-on-browser grey sm"
           )}
       </td>
 
@@ -293,7 +293,7 @@ const renderOutdatedPackages = async (
         ${
           (listOfPackages || []).length > 0
             ? `
-           <div class='grey-header text-sm'>
+           <div class='grey-header text-sm text-light-grey'>
                   <div>
                     <b>* High: </b>  <i>The package has a major/minor version difference. This means there are breaking changes that you might need to address in your code when updating to the latest version.</i>
                   </div>

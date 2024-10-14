@@ -6,13 +6,15 @@ import {
   PAGE_TITLE,
   SOURCE_TYPE
 } from "./constants";
+import { addIcon } from "./icons";
 
 import {
   GLOBAL_STATE_MANAGER,
   initializeAppInfo,
   logErrorMsg,
   logMsg,
-  renderFormField
+  renderFormField,
+  splitButton
 } from "./util";
 
 const getWebviewContent = async (webRenderer: IWebRenderer) => {
@@ -62,7 +64,7 @@ const getWebviewContent = async (webRenderer: IWebRenderer) => {
   `;
 
   htmlStr += `
-  <div class='form-group mb-1'>
+  <div class='form-group mb-1 mr-2'>
       <div class='mb-1'>
         ${renderFormField(
           "open_ai_api",
@@ -150,12 +152,12 @@ const getWebviewContent = async (webRenderer: IWebRenderer) => {
       </div>
     </div>
 
-    <div>
-          <button type='button' 
-            class='submit-btn hide-on-browser-1' 
-            onclick="saveConfigurations()">
-            Save Configurations
-          </button>
+    <div class='mb-2 mr-2'>
+      ${splitButton(
+        addIcon(),
+        `Save Configurations`,
+        `onclick="saveConfigurations()"`
+      )}
     </div>
   </div>`;
 

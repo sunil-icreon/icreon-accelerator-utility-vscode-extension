@@ -11,7 +11,7 @@ import {
   logMsg
 } from "../util";
 
-const { PROJECT_STAT } = require("../constants");
+import { PROJECT_STAT } from "../constants";
 
 const renderLicensedFiles = (
   webRenderer: IWebRenderer,

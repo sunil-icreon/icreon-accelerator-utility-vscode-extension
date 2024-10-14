@@ -1,6 +1,6 @@
 import vscode from "vscode";
 import { IRecord, IWebRenderer } from "../common.types";
-const { getScanningHTML } = require("../util");
+import { getScanningHTML } from "../util";
 const MAX_LINE_COUNT = 600;
 
 const getFunctionCount = (document: IRecord) => {

@@ -20,6 +20,11 @@ var allSections = [
     selected: true
   },
   {
+    id: "secrets",
+    label: "Secrets",
+    selected: false
+  },
+  {
     id: "eslintIssues",
     label: "ESLint Issues",
     selected: false
@@ -125,18 +130,6 @@ function toggleCopyRight(flag) {
 function closeCommonMessage() {
   setContent("app_common_info", "");
   showElement("app_common_info", false);
-}
-
-function showEventLog(flag) {
-  if (!flag) {
-    setContent("analytics_event_log", "");
-    showElement("analytics_event_log", false);
-    return;
-  }
-
-  vscode.postMessage({
-    command: "showEventLog"
-  });
 }
 
 function downloadReport(reportType) {
@@ -930,6 +923,10 @@ window.addEventListener("message", (event) => {
       renderResponses("licensed", data);
       break;
 
+    case "secretContent":
+      renderResponses("secrets", data);
+      break;
+
     case "nodeVerionContent":
       setContent("nodeVerionsLabel", data.htmlContent);
       break;
@@ -1169,11 +1166,6 @@ window.addEventListener("message", (event) => {
     case "leftSectionUserInfo":
       setContent("left_section_user_info", data.htmlContent);
       showElement("user_info_section", true, "flex");
-      break;
-
-    case "analyticsEventLogContent":
-      setContent("analytics_event_log", data.htmlContent);
-      showElement("analytics_event_log", true, "flex");
       break;
 
     case "newVersionContent":

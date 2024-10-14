@@ -98,14 +98,14 @@ const getWebviewContent = async (webRenderer: IWebRenderer) => {
                     <span class='field-label'>&nbsp;</span>
                     <div class='flex-group'>
                         <button type='button' 
-                            class='submit-btn hide-on-browser-1' 
+                            class='submit-btn hide-on-browser' 
                             onclick="writeUnitTests(-1)">
                             Start Execution
                         </button>
 
                         <button type='button' 
                             id='ai_stop_execution'
-                            class='submit-btn danger-btn hide-on-browser-1' 
+                            class='submit-btn danger-btn hide-on-browser' 
                             style='display:none'
                             onclick="terminateUnitTestRun()">
                             Stop Execution
@@ -158,23 +158,23 @@ const getActionBtnsForTD = (action: string) => {
   switch (action) {
     case TEST_BTN_ACTIONS.WRITE:
       return `<button type='button' 
-                  class='submit-btn mr-1 hide-on-browser-1' 
+                  class='submit-btn mr-1 hide-on-browser' 
                   onclick="aiWriteTestFile('${action}')">Create File
                 </button>`;
 
     case TEST_BTN_ACTIONS.OVERRIGHT:
       return `<button type='button' 
-                  class='submit-btn hide-on-browser-1' 
+                  class='submit-btn hide-on-browser' 
                   onclick="aiWriteTestFile('${action}')">Overwrite
               </button>
 
               <button type='button' 
-                  class='submit-btn hide-on-browser-1' 
+                  class='submit-btn hide-on-browser' 
                   onclick="aiWriteTestFile('${TEST_BTN_ACTIONS.APPEND}')">Append
               </button>
 
               <button type='button' 
-                  class='submit-btn hide-on-browser-1' 
+                  class='submit-btn hide-on-browser' 
                   onclick="aiWriteTestFile('${TEST_BTN_ACTIONS.SKIP}')">Skip
               </button>
                 `;
@@ -247,7 +247,7 @@ const renderTestFiles = (webRenderer: IWebRenderer, files: Array<IRecord>) => {
 
               <div id='ai_unit_td_${index}_action_btns' class='progress-actions flex flex-justify-start flex-gap-10'>
                   <button type='button' 
-                      class='submit-btn mr-1 hide-on-browser-1' 
+                      class='submit-btn mr-1 hide-on-browser' 
                       onclick="writeUnitTests(${index})">
                       Generate Tests
                   </button>

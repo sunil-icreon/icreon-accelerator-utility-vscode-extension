@@ -1,3 +1,5 @@
+import { IRecord } from "./common.types";
+
 export const extensionPrefix = `icreon-accelerator-utility`;
 export const REPORT_TITLE = "Icreon Accelerator: Utilities";
 export const REPORT_TEMPLATE = "npm-audit-report";
@@ -54,7 +56,8 @@ export const PROJECT_STAT = {
   AUDIT: "auditStat",
   CODE_SCORE: "codeScoreStat",
   DASHBOARD: "dashboardStat",
-  DEPENDENCY: "dependencyStat"
+  DEPENDENCY: "dependencyStat",
+  SECRETS: "secretStat"
 };
 
 export const LOCAL_STORAGE = {
@@ -117,7 +120,8 @@ export const SECTIONS_IDS = {
   DUPLICATE_CODES: "duplicateCodes",
   CODE_SCORE: "codeScores",
   LICENSED: "licensed",
-  UNUSED_CODES: "unused_codes"
+  UNUSED_CODES: "unused_codes",
+  SECRETS: "secrets"
 };
 
 export let SECTIONS = [
@@ -138,6 +142,12 @@ export let SECTIONS = [
     label: "Dependencies",
     info: `We'll read package.json & package-lock.json files to get the information of the packages installed.`,
     selected: true
+  },
+  {
+    id: SECTIONS_IDS.SECRETS,
+    label: "Secret Phrases",
+    info: `This will detect hard-coded secrets and passwords can significantly enhance code security by preventing the unintended exposure of sensitive information`,
+    selected: false
   },
   {
     id: SECTIONS_IDS.ESLINT,
@@ -171,7 +181,7 @@ export let SECTIONS = [
   // }
 ];
 
-export const IGNORE_PATHS = {
+export const IGNORE_PATHS: IRecord = {
   UNIT_TEST_FOLDER: ["node_modules", "build", "dist", "public", "coverage"],
   UNIT_TEST_FILES: [
     ".next",

@@ -237,7 +237,7 @@ export const renderNpmAuditReportCommand = async (
   webRenderer: IWebRenderer
 ) => {
   await createHTMLReport(webRenderer);
-  await checkVersionUpdate(webRenderer);
+  checkVersionUpdate(webRenderer);
   // getNodeVersions(webRenderer);
 };
 

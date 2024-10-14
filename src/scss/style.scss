@@ -39,6 +39,7 @@ $text-moderate: #ae922a;
 $text-low: #cb8c03;
 $info-bg: #b6d3f1;
 $text-grey: #707070;
+$text-light-grey: #a5a4a4;
 $text-purple: #7240cc;
 $text-green: #1a7f50;
 $text-warning: #9a5919;
@@ -102,7 +103,7 @@ $red: red;
   display: none;
 }
 .error-section {
-  background: $red !important;
+  background: #ffe8e8 !important;
   border-top: 5px solid $high-bg;
 }
 
@@ -669,14 +670,17 @@ body {
 .hint {
   font-size: 0.9em;
   font-style: italic;
-  color: #a5a4a4;
+  color: $text-light-grey;
   margin-bottom: 20px;
 }
 
 .text-sm {
   font-size: 14px;
   font-style: italic;
-  color: #a5a4a4;
+}
+
+.text-light-grey {
+  color: $text-light-grey !important;
 }
 
 .table {
@@ -1148,6 +1152,24 @@ tr.selected {
   display: inline-block;
 }
 
+.badge-link {
+  border: 1px solid #ebebeb;
+  border-radius: 4px;
+  padding: 2px 5px;
+  background: #ebf2ff;
+  color: #4d8aff;
+  text-decoration: none;
+
+  &:focus {
+    outline: none !important;
+  }
+
+  &:hover {
+    background: $icreon-purple-light;
+    color: $icreon-blue-bg;
+  }
+}
+
 .badge {
   padding: 5px 10px 5px 10px;
   border-radius: 4px;
@@ -1364,7 +1386,7 @@ tr.selected {
 .short-desc {
   font-size: 0.9em;
   font-style: italic;
-  color: #a5a4a4;
+  color: $text-light-grey;
   margin-top: 5px;
 }
 
@@ -2039,6 +2061,8 @@ tr.selected {
     padding-top: 15px;
     width: calc(100% - 220px);
     overflow: auto;
+    padding-bottom: 50px;
+    padding-right: 15px;
   }
 }
 

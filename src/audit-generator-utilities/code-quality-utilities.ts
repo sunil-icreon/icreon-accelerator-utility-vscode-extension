@@ -7,6 +7,7 @@ import {
   getIgnoreFileFolder,
   getScanningHTML,
   getScanningHTMLSmall,
+  logInFile,
   onylFileName,
   renderAccordianItem
 } from "../util";
@@ -16,7 +17,7 @@ import util from "util";
 import vscode from "vscode";
 import { IRecord, IWebRenderer } from "../common.types";
 
-const { PROJECT_STAT } = require("../constants");
+import { PROJECT_STAT } from "../constants";
 
 const renderDuplicateCodes = (
   webRenderer: IWebRenderer,
@@ -358,6 +359,10 @@ const renderScoreTable = (data: Array<IRecord>) => {
 };
 
 const renderScoreSummary = (data: Array<IRecord>) => {
+  if (!data || data.length === 0) {
+    return "";
+  }
+
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
   let htmlStr = `<div class='flex-1'>
               <div class="content">`;
@@ -501,13 +506,17 @@ export const getCodeScores = async (webRenderer: IWebRenderer) => {
   const exec = util.promisify(require("child_process").exec);
 
   try {
-    exec(`npx fta-cli@2.0.0 ${webRenderer.parentPath} --json `, {
-      windowsHide: true
-    })
+    exec(
+      `npx fta-cli@2.0.0 ${webRenderer.parentPath} --score-cap 100000 --json `,
+      {
+        windowsHide: true
+      }
+    )
       .then((result: IRecord) => {
         renderCodeScore(webRenderer, JSON.parse(result.stdout || "[]"));
       })
       .catch((e: IRecord) => {
+        logInFile({ e }, webRenderer.extensionPath);
         renderCodeScore(webRenderer, JSON.parse(e.stdout || "[]"));
       });
   } catch (output) {

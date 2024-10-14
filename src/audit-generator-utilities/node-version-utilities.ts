@@ -27,6 +27,6 @@ export const getNodeVersions = (webRenderer: IWebRenderer) => {
 
 const renderNodeVersions = async (webRenderer: IWebRenderer, data: string) => {
   webRenderer.sendMessageToUI("nodeVerionContent", {
-    htmlContent: `<div class='text-sm'>Node (${data})</div>`
+    htmlContent: `<div class='text-sm text-light-grey'>Node (${data})</div>`
   });
 };
