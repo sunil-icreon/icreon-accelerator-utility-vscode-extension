@@ -15,7 +15,6 @@ import {
   REPORT_TEMPLATE,
   REPORT_TITLE,
   SECTIONS,
-  SECTIONS_IDS,
   SOURCE_TYPE
 } from "./constants";
 
@@ -225,9 +224,9 @@ const createHTMLReport = async (webRenderer: IWebRenderer) => {
   }
 
   let sections = [...SECTIONS];
-  if (!showESLintOption) {
-    sections = sections.filter((s) => s.id !== SECTIONS_IDS.ESLINT);
-  }
+  // if (!showESLintOption) {
+  //   sections = sections.filter((s) => s.id !== SECTIONS_IDS.ESLINT);
+  // }
 
   content = await renderAppBodyContent(content, sections);
   webRenderer.renderContent(content, REPORT_TITLE, SOURCE_TYPE.PROJECT);

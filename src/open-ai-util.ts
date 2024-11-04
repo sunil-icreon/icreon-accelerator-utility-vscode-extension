@@ -1,4 +1,3 @@
-import { marked } from "marked";
 import { OpenAI } from "openai";
 
 import {
@@ -8,6 +7,7 @@ import {
   LOCAL_STORAGE
 } from "./constants";
 
+import { marked } from "marked";
 import {
   AIProviderType,
   IContext,
@@ -99,13 +99,11 @@ export const callOpenAI = async (
     });
 
     let resp: Array<IRecord> = [];
-    let compResp: Array<IRecord> = [];
     for await (const chunk of stream) {
       resp = [...resp, chunk.choices[0]?.delta?.content || ""];
-      compResp = [...compResp, chunk.choices];
-      cb && cb(resp, null, false, compResp);
+      cb && cb(resp, null, false);
     }
-    cb && cb(resp, null, true, compResp);
+    cb && cb(resp, null, true);
   } catch (e) {
     cb && cb([], e, true);
   }
@@ -192,7 +190,7 @@ export const renderAISearchTool = async (
         </div>
     </div>
     <div class='flex-grow-1 mt-1'>
-            <div id="${containerId}_search_output" style="display:none" class='html-code'></div>
+        <div id="${containerId}_search_output" style="display:none" class='html-code'></div>
     </div>
     `;
   }
@@ -259,11 +257,13 @@ export const searchInGPT = (webRenderer: IWebRenderer, data: IRecord) => {
           ? EXECUTION_STATUS.COMPLETE
           : EXECUTION_STATUS.RUNNING;
 
-        webRenderer.sendMessageToUI("aiSearchInGPTContent", {
-          containerId,
-          status,
-          htmlContent: marked((resp || []).join(""))
-        });
+        if (isComplete) {
+          webRenderer.sendMessageToUI("aiSearchInGPTContent", {
+            containerId,
+            status,
+            htmlContent: marked((resp || []).join(""))
+          });
+        }
       }
     }
   );

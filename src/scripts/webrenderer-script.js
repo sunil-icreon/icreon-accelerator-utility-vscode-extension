@@ -543,6 +543,7 @@ function openTab(evt, tabName) {
 function renderResponses(id, data) {
   if (data.hideSection) {
     showElement(id + "_brief_section", false, "flex");
+    showElement(id + "_accordian_item", false, "flex");
     return;
   }
 

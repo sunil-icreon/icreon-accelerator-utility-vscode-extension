@@ -75,10 +75,10 @@ export const callGeminiAI = async (
       const chunkText = chunk.text();
       resp = [...resp, chunkText];
       compResp = [...compResp, chunkText];
-      cb && cb(resp, null, false, compResp);
+      cb && cb(resp, null, false);
     }
 
-    cb && cb(resp, null, true, resp);
+    cb && cb(resp, null, true);
   } catch (e) {
     cb && cb([], e, true);
   }
